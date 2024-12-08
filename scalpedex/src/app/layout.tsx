@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BottomNav } from '@/components/layout/BottomNav';
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -20,15 +21,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body>
+        <div className="min-h-screen bg-gradient-to-br from-violet-950 to-black">
+          <main className="pb-20"> {/* Espace pour la navigation */}
+            {children}
+          </main>
+          <BottomNav />
+        </div>
       </body>
     </html>
   );
