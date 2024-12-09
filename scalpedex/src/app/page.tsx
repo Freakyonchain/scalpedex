@@ -1,23 +1,26 @@
-import React from 'react';
+// src/app/page.tsx
 import { Scan, TrendingUp, Library } from 'lucide-react';
 import Link from 'next/link';
+import { SignInButton } from "@clerk/nextjs";
 
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-violet-950 to-black text-white">
-      <div className="container mx-auto px-4 py-8">
+    <main className="min-h-screen p-6">
+      <div className="container mx-auto px-4">
         {/* Header */}
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-purple-600 bg-clip-text text-transparent">
             ScalpedEx
           </h1>
-          <button className="px-4 py-2 bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors">
-            Connect
-          </button>
+          <SignInButton>
+  <button className="px-4 py-2 bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors">
+    Connect
+  </button>
+</SignInButton>
         </header>
 
-        {/* Main CTA - Scanner */}
+        {/* Main CTA */}
         <div className="mb-12 p-6 rounded-2xl bg-violet-900/20 backdrop-blur-sm border border-violet-800/50">
           <div className="flex flex-col items-center text-center gap-4">
             <div className="p-4 rounded-full bg-violet-600">
@@ -27,9 +30,12 @@ export default function Home() {
             <p className="text-violet-300">
               Instantly scan and evaluate your collectibles
             </p>
-            <Link href="/scan" className="mt-4 px-8 py-3 bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors font-medium">
-  Start Scanning
-</Link>
+            <Link 
+              href="/scan"
+              className="mt-4 px-8 py-3 bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors font-medium"
+            >
+              Start Scanning
+            </Link>
           </div>
         </div>
 

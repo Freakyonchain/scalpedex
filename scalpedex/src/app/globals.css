@@ -3,19 +3,36 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 76, 29, 149;
+  --background-end-rgb: 0, 0, 0;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom right,
+      rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb)));
+  min-height: 100vh;
+}
+
+/* Styles pour Clerk */
+.cl-formButtonPrimary {
+  background-color: rgb(124, 58, 237) !important;
+}
+
+.cl-card {
+  background-color: rgba(109, 40, 217, 0.2) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(124, 58, 237, 0.2) !important;
+}
+
+.cl-formFieldInput {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  color: white !important;
+}
+
+.cl-formFieldLabel {
+  color: rgb(196, 181, 253) !important;
 }
