@@ -1,22 +1,26 @@
 // src/app/layout.tsx
-import { ClerkProvider } from '@clerk/nextjs';
-import { BottomNav } from '@/components/layout/BottomNav';
-import { Toaster } from 'sonner';
-import './globals.css';
+import '@/app/globals.css'
+import { AuthProvider } from '@/components/providers/AuthProvider'
+import { BottomNav } from '@/components/layout/BottomNav'
+import { Toaster } from 'sonner'
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
-      <html lang="fr">
-        <body>
-          {children}
+    <html lang="fr">
+      <body>
+        <AuthProvider>
+          <main className="min-h-screen bg-gradient-to-br from-violet-950 to-black pb-24">
+            {children}
+          </main>
+          <BottomNav />
           <Toaster 
             theme="dark"
             position="top-center"
+            richColors
             toastOptions={{
               style: {
                 background: 'rgba(109, 40, 217, 0.2)',
@@ -26,8 +30,8 @@ export default function RootLayout({
               }
             }}
           />
-        </body>
-      </html>
-    </ClerkProvider>
-  );
+        </AuthProvider>
+      </body>
+    </html>
+  )
 }

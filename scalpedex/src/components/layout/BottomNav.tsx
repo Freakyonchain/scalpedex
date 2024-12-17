@@ -1,13 +1,30 @@
-// components/layout/BottomNav.tsx
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Scan, LayoutGrid, LineChart, User } from 'lucide-react';
+import { createClientBrowser } from '@/lib/supabase/client';
 
 export const BottomNav = () => {
+  const [username, setUsername] = useState('Profil');
   const pathname = usePathname();
+
+  useEffect(() => {
+    async function fetchUsername() {
+      const supabase = createClientBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const derivedUsername = user?.user_metadata?.username 
+        || user?.email?.split('@')[0] 
+        || 'Profil';
+      
+      setUsername(derivedUsername);
+    }
+
+    fetchUsername();
+  }, []);
+
   const isActive = (path: string) => pathname === path;
 
   return (
@@ -36,7 +53,7 @@ export const BottomNav = () => {
             className={`flex flex-col items-center ${isActive('/profile') ? 'text-violet-400' : 'text-violet-400/60'}`}
           >
             <User size={20} />
-            <span className="text-xs mt-1">Profil</span>
+            <span className="text-xs mt-1">{username}</span>
           </Link>
         </div>
       </nav>

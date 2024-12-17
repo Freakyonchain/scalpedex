@@ -1,145 +1,204 @@
-// app/collection/page.tsx
-'use client';
+import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { TrendingUp, Package, DollarSign, AlertCircle } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
+import { getCollectionStats, getCollectionItems } from '@/lib/actions/collection';
+import { CollectionGrid } from '@/components/collection/CollectionGrid';
+import { CollectionControls } from '@/components/collection/CollectionControls';
+import Link from 'next/link';
 
-import React from 'react';
-import { TrendingUp, TrendingDown, Package, DollarSign, AlertCircle, Search } from 'lucide-react';
+export const dynamic = 'force-dynamic'
 
-export default function CollectionDashboard() {
+function StatsCard({ 
+  title, 
+  value, 
+  icon: Icon, 
+  subtitle, 
+  subtitleIcon: SubIcon, 
+  subtitleColor = "text-violet-400" 
+}: {
+  title: string
+  value: string | number
+  icon: any
+  subtitle?: string
+  subtitleIcon?: any
+  subtitleColor?: string
+}) {
   return (
-    <div className="p-6 space-y-6">
-      {/* Quick Stats */}
+    <div className="p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl border border-violet-800/50">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-violet-300">{title}</p>
+          <h3 className="text-2xl font-bold text-white mt-1">{value}</h3>
+          {subtitle && (
+            <div className={`flex items-center gap-1 ${subtitleColor} text-sm mt-2`}>
+              {SubIcon && <SubIcon size={16} />}
+              <span>{subtitle}</span>
+            </div>
+          )}
+        </div>
+        <div className="p-2 bg-violet-600/20 rounded-lg">
+          <Icon size={24} className="text-violet-400" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="animate-pulse space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl border border-violet-800/50">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-violet-300">Valeur Totale</p>
-              <h3 className="text-2xl font-bold text-white mt-1">16,900€</h3>
-              <div className="flex items-center gap-1 text-green-400 text-sm mt-2">
-                <TrendingUp size={16} />
-                <span>+12.8%</span>
-              </div>
-            </div>
-            <div className="p-2 bg-violet-600/20 rounded-lg">
-              <DollarSign size={24} className="text-violet-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl border border-violet-800/50">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-violet-300">Items</p>
-              <h3 className="text-2xl font-bold text-white mt-1">147</h3>
-              <div className="flex items-center gap-1 text-violet-400 text-sm mt-2">
-                <Package size={16} />
-                <span>23 sealed</span>
-              </div>
-            </div>
-            <div className="p-2 bg-violet-600/20 rounded-lg">
-              <Package size={24} className="text-violet-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl border border-violet-800/50">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-violet-300">Meilleur ROI</p>
-              <h3 className="text-2xl font-bold text-white mt-1">+324%</h3>
-              <div className="flex items-center gap-1 text-green-400 text-sm mt-2">
-                <TrendingUp size={16} />
-                <span>Charizard PSA 10</span>
-              </div>
-            </div>
-            <div className="p-2 bg-violet-600/20 rounded-lg">
-              <TrendingUp size={24} className="text-violet-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl border border-violet-800/50">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-violet-300">Alertes Prix</p>
-              <h3 className="text-2xl font-bold text-white mt-1">3</h3>
-              <div className="flex items-center gap-1 text-yellow-400 text-sm mt-2">
-                <AlertCircle size={16} />
-                <span>Opportunités</span>
-              </div>
-            </div>
-            <div className="p-2 bg-violet-600/20 rounded-lg">
-              <AlertCircle size={24} className="text-violet-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtres et Recherche */}
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex gap-2">
-          <button className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors">
-            Tous
-          </button>
-          <button className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors">
-            Sealed
-          </button>
-          <button className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors">
-            Singles
-          </button>
-          <button className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors">
-            Graded
-          </button>
-        </div>
-        <div className="relative">
-          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-400" />
-          <input 
-            type="text" 
-            placeholder="Rechercher dans la collection..."
-            className="pl-10 pr-4 py-2 bg-violet-900/20 border border-violet-800/50 rounded-lg text-white placeholder-violet-400 w-64"
-          />
-        </div>
-      </div>
-
-      {/* Grid de la Collection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl border border-violet-800/50 hover:border-violet-600/50 transition-colors cursor-pointer">
-            <img 
-              src="/api/placeholder/200/200" 
-              alt="Pokemon Card"
-              className="w-full aspect-square object-cover rounded-lg mb-3 bg-violet-800/30"
-            />
-            <h3 className="font-medium text-white">Charizard VSTAR</h3>
-            <p className="text-violet-300 text-sm mt-1">Brilliant Stars</p>
-            <div className="flex items-center justify-between mt-3">
-              <span className="text-white font-medium">89.99€</span>
-              <div className="flex items-center gap-1 text-green-400 text-sm">
-                <TrendingUp size={16} />
-                <span>+5.2%</span>
-              </div>
-            </div>
-          </div>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-32 bg-violet-900/20 rounded-xl" />
         ))}
       </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center gap-2">
-        <button className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors">
-          Précédent
-        </button>
-        <button className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors">
-          1
-        </button>
-        <button className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors">
-          2
-        </button>
-        <button className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors">
-          3
-        </button>
-        <button className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors">
-          Suivant
-        </button>
+      <div className="h-12 bg-violet-900/20 rounded-lg w-full max-w-md" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="h-80 bg-violet-900/20 rounded-xl" />
+        ))}
       </div>
+    </div>
+  );
+}
+
+export default async function CollectionDashboard({
+  searchParams
+}: {
+  searchParams: { search?: string; condition?: string; page?: string }
+}) {
+  const supabase = createClient()
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  
+  if (authError || !user) {
+    redirect('/auth/sign-in')
+  }
+
+  const page = Number(searchParams.page) || 1;
+  const search = searchParams.search || '';
+  const condition = searchParams.condition || '';
+
+  const [stats, { items, total }] = await Promise.all([
+    getCollectionStats().catch(() => ({
+      totalValue: 0,
+      totalItems: 0,
+      sealedCount: 0
+    })),
+    getCollectionItems({ search, condition, page }).catch(() => ({ items: [], total: 0 }))
+  ]);
+
+  return (
+    <div className="p-6 space-y-6 min-h-screen bg-gradient-to-b from-violet-950 to-black">
+      <Suspense fallback={<LoadingState />}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatsCard
+            title="Valeur Totale"
+            value={stats.totalValue.toLocaleString('fr-FR', {
+              style: 'currency',
+              currency: 'EUR'
+            })}
+            icon={DollarSign}
+          />
+
+          <StatsCard
+            title="Items"
+            value={stats.totalItems || 0}
+            icon={Package}
+            subtitle={`${stats.sealedCount || 0} sealed`}
+            subtitleIcon={Package}
+          />
+
+          <StatsCard
+            title="Meilleur ROI"
+            value="-"
+            icon={TrendingUp}
+            subtitle="À venir"
+            subtitleIcon={TrendingUp}
+          />
+
+          <StatsCard
+            title="Alertes Prix"
+            value="-"
+            icon={AlertCircle}
+            subtitle="À venir"
+            subtitleIcon={AlertCircle}
+            subtitleColor="text-yellow-400"
+          />
+        </div>
+
+        <CollectionControls 
+          search={search} 
+          condition={condition} 
+        />
+
+        {items.length === 0 ? (
+          <div className="text-center py-12">
+            <Package size={48} className="mx-auto text-violet-400 mb-4" />
+            <h3 className="text-xl font-medium text-white mb-2">
+              {search || condition ? 'Aucun résultat trouvé' : 'Votre collection est vide'}
+            </h3>
+            <p className="text-violet-300">
+              {search || condition ? (
+                <>
+                  Modifiez vos filtres ou{' '}
+                  <Link href="/collection" className="text-violet-400 hover:text-white underline">
+                    voir tous les items
+                  </Link>
+                </>
+              ) : (
+                'Commencez à ajouter des items à votre collection'
+              )}
+            </p>
+          </div>
+        ) : (
+          <CollectionGrid items={items} />
+        )}
+
+        {total > 12 && (
+          <div className="flex justify-center gap-2">
+            {page > 1 && (
+              <Link
+                href={`/collection?page=${page - 1}${search ? `&search=${search}` : ''}${condition ? `&condition=${condition}` : ''}`}
+                className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors"
+              >
+                Précédent
+              </Link>
+            )}
+            
+            {[...Array(Math.ceil(total / 12))].map((_, i) => {
+              if (i + 1 === page || i + 1 === 1 || i + 1 === Math.ceil(total / 12) || (i + 1 >= page - 1 && i + 1 <= page + 1)) {
+                return (
+                  <Link
+                    key={i}
+                    href={`/collection?page=${i + 1}${search ? `&search=${search}` : ''}${condition ? `&condition=${condition}` : ''}`}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      page === i + 1
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-violet-900/50 text-violet-300 hover:bg-violet-800/50'
+                    }`}
+                  >
+                    {i + 1}
+                  </Link>
+                );
+              } else if (i === 1 || i === Math.ceil(total / 12) - 2) {
+                return <span key={i} className="px-2 text-violet-400">...</span>;
+              }
+              return null;
+            })}
+            
+            {page < Math.ceil(total / 12) && (
+              <Link
+                href={`/collection?page=${page + 1}${search ? `&search=${search}` : ''}${condition ? `&condition=${condition}` : ''}`}
+                className="px-4 py-2 bg-violet-900/50 text-violet-300 rounded-lg hover:bg-violet-800/50 transition-colors"
+              >
+                Suivant
+              </Link>
+            )}
+          </div>
+        )}
+      </Suspense>
     </div>
   );
 }

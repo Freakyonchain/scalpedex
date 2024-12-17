@@ -1,14 +1,104 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+// Modèle utilisateur Clerk
+model ClerkUser {
+  id        String    @id
+  items     Item[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model PokemonSet {
+  id          String        @id @default(cuid())
+  name        String        
+  language    Language      @default(FRENCH)
+  releaseDate DateTime?     
+  isActive    Boolean       @default(true)
+  contents    ItemContent[] 
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@unique([name, language])
+}
+
+model ItemType {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  msrp          Float?        
+  contents      ItemContent[] 
+  items         Item[]        
+  marketPrices  MarketPrice[]
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ItemContent {
+  id            String      @id @default(cuid())
+  itemTypeId    String      
+  itemType      ItemType    @relation(fields: [itemTypeId], references: [id])
+  setId         String      
+  set           PokemonSet  @relation(fields: [setId], references: [id])
+  quantity      Int         
+  createdAt     DateTime    @default(now())
+  
+  @@unique([itemTypeId, setId])
+}
+
+model Item {
+  id            String    @id @default(cuid())
+  barcode       String    
+  itemTypeId    String    
+  itemType      ItemType  @relation(fields: [itemTypeId], references: [id])
+  condition     Condition @default(FACTORY_SEALED)
+  purchasePrice Float     
+  purchaseDate  DateTime  @default(now())
+  quantity      Int       @default(1)
+  notes         String?   
+  
+  // Relation explicite avec le modèle ClerkUser
+  userId        String    
+  user          ClerkUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@unique([barcode, userId])  // Un code-barres unique par utilisateur
+  @@index([userId])
+  @@index([barcode])
+}
+
+model MarketPrice {
+  id          String    @id @default(cuid())
+  itemTypeId  String
+  itemType    ItemType  @relation(fields: [itemTypeId], references: [id])
+  price       Float     
+  source      String    
+  soldAt      DateTime  
+  createdAt   DateTime  @default(now())
+}
+
+enum Language {
+  ENGLISH
+  JAPANESE
+  FRENCH
+  GERMAN
+  SPANISH
+  KOREAN
+  CHINESE
+}
+
+enum Condition {
+  FACTORY_SEALED
+  CUSTOM_SEALED
+  MINT
+  NEAR_MINT
+  PLAYED
 }

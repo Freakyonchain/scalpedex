@@ -54,6 +54,19 @@ export const QuickAddForm = ({ barcode, onClose, onSave, onDetailedEdit }: Quick
 
         {/* Formulaire */}
         <div className="p-6 space-y-6">
+                  {/* Code barre */}
+
+        <div className="border-b border-violet-800/50 mb-6">
+  <div className="flex items-center gap-2 mb-4">
+    <label className="text-sm text-violet-300">Code-barres</label>
+    <input
+      type="text"
+      value={barcode}
+      readOnly
+      className="flex-1 bg-black/20 px-3 py-1.5 rounded border border-violet-800/50 text-white font-mono text-sm"
+    />
+  </div>
+</div>
           {/* Prix */}
           <div>
             <label className="block text-sm text-violet-300 mb-2">Prix d'achat</label>

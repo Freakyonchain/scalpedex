@@ -1,75 +1,70 @@
 // src/app/page.tsx
-import { Scan, TrendingUp, Library } from 'lucide-react';
-import Link from 'next/link';
-import { SignInButton } from "@clerk/nextjs";
+"use client"
 
+import { Scan, TrendingUp, Library } from 'lucide-react'
+import Link from 'next/link'
+import { createClientBrowser } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
+  const supabase = createClientBrowser()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+    }
+    checkAuth()
+  }, [supabase])
+
+  const handleSignIn = () => {
+    router.push('/auth/sign-in')
+  }
+
   return (
-    <main className="min-h-screen p-6">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-12">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-purple-600 bg-clip-text text-transparent">
-            ScalpedEx
-          </h1>
-          <SignInButton>
-  <button className="px-4 py-2 bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors">
-    Connect
-  </button>
-</SignInButton>
-        </header>
-
-        {/* Main CTA */}
-        <div className="mb-12 p-6 rounded-2xl bg-violet-900/20 backdrop-blur-sm border border-violet-800/50">
-          <div className="flex flex-col items-center text-center gap-4">
-            <div className="p-4 rounded-full bg-violet-600">
-              <Scan size={32} />
-            </div>
-            <h2 className="text-2xl font-semibold">Quick Scan</h2>
-            <p className="text-violet-300">
-              Instantly scan and evaluate your collectibles
-            </p>
-            <Link 
-              href="/scan"
-              className="mt-4 px-8 py-3 bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors font-medium"
-            >
-              Start Scanning
-            </Link>
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-xl bg-violet-900/20 backdrop-blur-sm border border-violet-800/50">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-violet-600">
-                <TrendingUp size={24} />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Market Analysis</h3>
-                <p className="text-violet-300">
-                  Real-time market prices and trends for your collection
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 rounded-xl bg-violet-900/20 backdrop-blur-sm border border-violet-800/50">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-violet-600">
-                <Library size={24} />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Collection Manager</h3>
-                <p className="text-violet-300">
-                  Track and organize your entire collection effortlessly
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-center p-6">
+      <div className="mb-8 text-center">
+        <h1 className="mb-2 text-4xl font-bold text-white">ScalpeDex</h1>
+        <p className="text-lg text-violet-300">
+          Votre compagnon pour la gestion de collection Pokémon
+        </p>
       </div>
-    </main>
-  );
+
+      <div className="grid w-full max-w-md gap-4">
+        {isAuthenticated ? (
+          <>
+            <Link
+              href="/scan"
+              className="flex items-center justify-between rounded-lg bg-violet-600 p-4 text-white transition-all hover:bg-violet-500"
+            >
+              <span className="flex items-center gap-2">
+                <Scan className="h-5 w-5" />
+                Scanner un produit
+              </span>
+            </Link>
+
+            <Link
+              href="/collection"
+              className="flex items-center justify-between rounded-lg bg-violet-900/50 p-4 text-white transition-all hover:bg-violet-800/50"
+            >
+              <span className="flex items-center gap-2">
+                <Library className="h-5 w-5" />
+                Voir ma collection
+              </span>
+            </Link>
+          </>
+        ) : (
+          <button
+            onClick={handleSignIn}
+            className="flex items-center justify-center rounded-lg bg-violet-600 p-4 text-white transition-all hover:bg-violet-500"
+          >
+            Se connecter
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
