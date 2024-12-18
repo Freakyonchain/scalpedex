@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import { TrendingUp, Package, DollarSign, AlertCircle } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, AlertCircle, Plus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getCollectionStats, getCollectionItems } from '@/lib/actions/collection';
 import { CollectionGrid } from '@/components/collection/CollectionGrid';
@@ -76,6 +76,9 @@ export default async function CollectionDashboard({
     redirect('/auth/sign-in')
   }
 
+  // Récupérer le prénom ou le username, avec un fallback
+  const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Collectionneur';
+
   const page = Number(searchParams.page) || 1;
   const search = searchParams.search || '';
   const condition = searchParams.condition || '';
@@ -89,6 +92,48 @@ export default async function CollectionDashboard({
     getCollectionItems({ search, condition, page }).catch(() => ({ items: [], total: 0 }))
   ]);
 
+  // Si la collection est vide, affichez uniquement le message et le bouton
+  if (items.length === 0) {
+    return (
+      <div className="p-6 space-y-6 min-h-screen bg-gradient-to-b from-violet-950 to-black flex items-center justify-center">
+        <div className="text-center py-12">
+          <Package size={48} className="mx-auto text-violet-400 mb-4" />
+          <h3 className="text-2xl font-medium text-white mb-2">
+            Salut {userName} 👋
+          </h3>
+          <p className="text-xl text-violet-300 mb-4">
+            Ta collection est encore vide
+          </p>
+          <p className="text-violet-400 mb-6">
+            Prêt à commencer ta première collection ?
+          </p>
+          
+          <Link 
+            href="/scan" 
+            className="mt-4 inline-flex items-center justify-center px-6 py-3 
+            bg-violet-600 text-white font-semibold 
+            rounded-xl 
+            hover:bg-violet-700 
+            transition-colors 
+            duration-300 
+            shadow-lg 
+            shadow-violet-500/50 
+            hover:shadow-xl 
+            hover:scale-105 
+            focus:outline-none 
+            focus:ring-2 
+            focus:ring-violet-500 
+            focus:ring-opacity-50"
+          >
+            <Plus size={24} className="mr-2" />
+            Ajoutez votre premier Item
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Si la collection n'est pas vide, affichez le contenu complet
   return (
     <div className="p-6 space-y-6 min-h-screen bg-gradient-to-b from-violet-950 to-black">
       <Suspense fallback={<LoadingState />}>
@@ -133,28 +178,7 @@ export default async function CollectionDashboard({
           condition={condition} 
         />
 
-        {items.length === 0 ? (
-          <div className="text-center py-12">
-            <Package size={48} className="mx-auto text-violet-400 mb-4" />
-            <h3 className="text-xl font-medium text-white mb-2">
-              {search || condition ? 'Aucun résultat trouvé' : 'Votre collection est vide'}
-            </h3>
-            <p className="text-violet-300">
-              {search || condition ? (
-                <>
-                  Modifiez vos filtres ou{' '}
-                  <Link href="/collection" className="text-violet-400 hover:text-white underline">
-                    voir tous les items
-                  </Link>
-                </>
-              ) : (
-                'Commencez à ajouter des items à votre collection'
-              )}
-            </p>
-          </div>
-        ) : (
-          <CollectionGrid items={items} />
-        )}
+        <CollectionGrid items={items} />
 
         {total > 12 && (
           <div className="flex justify-center gap-2">

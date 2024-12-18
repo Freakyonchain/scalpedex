@@ -63,7 +63,6 @@ export async function getCollectionStats() {
 
     // Gestion des erreurs de récupération des items
     if (itemsError) {
-      console.error('Erreur de récupération des items:', itemsError)
       return {
         totalValue: 0,
         totalItems: 0,
@@ -151,7 +150,6 @@ export async function getCollectionItems({
 
     // Gestion des erreurs de récupération des items
     if (error) {
-      console.error('Erreur de récupération des items:', error)
       return { 
         items: [], 
         total: 0, 
