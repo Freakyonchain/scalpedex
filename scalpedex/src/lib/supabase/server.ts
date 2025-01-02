@@ -1,37 +1,37 @@
+// @/lib/supabase/server.ts
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
-  const cookieStore = cookies()
+  try {
+    const cookieStore = cookies()
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        async get(name: string) {
-          const cookie = await cookieStore.get(name)
-          return cookie?.value
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
         },
-        async set(name: string, value: string, options: any) {
-          try {
-            // Le set doit être await aussi
-            await cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // Gérer les erreurs potentielles
-            console.error('Erreur lors de la définition du cookie:', error)
-          }
-        },
-        async remove(name: string, options: any) {
-          try {
-            // Le set pour la suppression doit être await
-            await cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // Gérer les erreurs potentielles
-            console.error('Erreur lors de la suppression du cookie:', error)
-          }
-        },
-      },
+      }
+    )
+
+    // Vérifions que le client est bien initialisé
+    if (!supabase) {
+      throw new Error('Échec de l\'initialisation du client Supabase')
     }
-  )
+
+    return supabase
+  } catch (error) {
+    console.error('Erreur dans createClient:', error)
+    throw new Error('Impossible de créer le client Supabase')
+  }
 }

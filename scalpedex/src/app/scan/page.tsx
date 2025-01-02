@@ -1,31 +1,37 @@
 // app/scan/page.tsx
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scan, Search, Sparkles, HelpCircle, ArrowDown, ShoppingBag, ListPlus } from 'lucide-react';import { BarcodeScanner } from '@/components/scanner/BarcodeScanner';
+import { Scan, Search, Sparkles, HelpCircle, ArrowDown, ShoppingBag, ListPlus } from 'lucide-react';
+import { BarcodeScanner } from '@/components/scanner/BarcodeScanner';
 import { ManualEntry } from '@/components/scanner/ManualEntry';
 import { FloatingTip } from '@/components/ui/floating-tip';
+import { QuickAddForm } from '@/components/scanner/QuickAddForm';
 import { toast } from 'sonner';
+
+interface ScanResult {
+  barcode: string;
+  marketPrice?: number;
+}
 
 export default function ScanPage() {
   // États
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
-  const [showTips, setShowTips] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !localStorage.getItem('hasSeenScanTips');
-    }
-    return true;
-  });
+  const [showTips, setShowTips] = useState(true); // Valeur par défaut simple
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [mode, setMode] = useState<'scalping' | 'collection' | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+
+  // Effet pour vérifier localStorage après le montage
+  useEffect(() => {
+    const hasSeenTips = localStorage.getItem('hasSeenScanTips');
+    if (hasSeenTips) {
+      setShowTips(false);
+    }
+  }, []);
   
-  interface ScanResult {
-    barcode: string;
-    marketPrice?: number;
-  }
   // Tips data
   const tips = [
     {
@@ -59,15 +65,13 @@ export default function ScanPage() {
     
     setScanResult({
       barcode,
-      marketPrice: 64.99 // Prix simulé pour le POC
+      marketPrice: 64.99
     });
   }, [isScanning]);
 
   const handleTipComplete = useCallback(() => {
     setShowTips(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('hasSeenScanTips', 'true');
-    }
+    localStorage.setItem('hasSeenScanTips', 'true');
   }, []);
 
   const handleTipNext = useCallback(() => {
@@ -243,27 +247,47 @@ export default function ScanPage() {
           )}
         </AnimatePresence>
 
-        {/* Quick Add Modal */}
-        <AnimatePresence>
-          {showQuickAdd && scanResult && (
-            <QuickAddForm
-              barcode={scanResult.barcode}
-              onClose={() => {
-                setShowQuickAdd(false);
-                setScanResult(null);
-              }}
-              onSave={async (data) => {
-                toast.success('Ajouté à la collection !');
-                setShowQuickAdd(false);
-                setScanResult(null);
-              }}
-              onDetailedEdit={() => {
-                setShowQuickAdd(false);
-                setMode('collection');
-              }}
-            />
-          )}
-        </AnimatePresence>
+{/* Quick Add Modal */}
+<AnimatePresence>
+  {showQuickAdd && scanResult && (
+    <QuickAddForm
+      barcode={scanResult.barcode}
+      onClose={() => {
+        setShowQuickAdd(false);
+        setScanResult(null);
+      }}
+      onSave={async (data) => {
+        try {
+          const response = await fetch('/api/collection', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erreur lors de l\'ajout à la collection');
+          }
+
+          await response.json();
+          toast.success('Ajouté à la collection !');
+          setShowQuickAdd(false);
+          setScanResult(null);
+        } catch (error: any) {
+          console.error('Error saving to collection:', error);
+          toast.error(error.message || 'Erreur lors de l\'ajout à la collection');
+          throw error; // On propage l'erreur pour que QuickAddForm puisse la gérer
+        }
+      }}
+      onDetailedEdit={() => {
+        setShowQuickAdd(false);
+        setMode('collection');
+      }}
+    />
+  )}
+</AnimatePresence>
 
         {/* Tips flottants */}
         <AnimatePresence>

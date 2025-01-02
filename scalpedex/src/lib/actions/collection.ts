@@ -35,68 +35,60 @@ function handleSupabaseError(error: any) {
 
 export async function getCollectionStats() {
   try {
-    const supabase = createClient()
-    
-    // Récupération de l'authentification de manière robuste
-    const { data: authData, error: authError } = await supabase.auth.getUser()
-    
-    // Gestion explicite des scénarios d'authentification
-    if (authError || !authData.user) {
-      console.warn('Authentification incomplète:', { 
-        error: authError, 
-        userExists: !!authData.user 
-      })
-      
-      return {
-        totalValue: 0,
-        totalItems: 0,
-        sealedCount: 0,
-        status: 'unauthenticated'
-      }
+    const supabase = await createClient()
+    if (!supabase) {
+      throw new Error('Impossible d\'initialiser le client Supabase')
     }
 
-    // Récupération des items de l'utilisateur avec sélection optimisée
-    const { data: items, error: itemsError } = await supabase
-      .from('items')
-      .select('purchase_price, quantity, condition')
-      .eq('user_id', authData.user.id)
-
-    // Gestion des erreurs de récupération des items
-    if (itemsError) {
-      return {
-        totalValue: 0,
-        totalItems: 0,
-        sealedCount: 0,
-        status: 'error'
-      }
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      throw new Error(`Échec de l'authentification: ${authError?.message || 'Aucun utilisateur'}`)
     }
 
-    // Calcul sécurisé des statistiques
+    // Utilisation de la bonne table 'user_collection'
+    const { data, error } = await supabase
+      .from('user_collection')
+      .select('purchase_price, condition, quantity')
+      .eq('user_id', user.id)
+      .is('sold_date', null) // Ne compter que les items non vendus
+
+    if (error) {
+      throw new Error(`Erreur Supabase: ${error.message || 'Erreur inconnue'}`)
+    }
+
     const stats = {
-      totalValue: items.reduce((sum, item) => 
-        sum + (Number(item.purchase_price) * Number(item.quantity)), 0),
-      totalItems: items.reduce((sum, item) => 
-        sum + Number(item.quantity), 0),
-      sealedCount: items.reduce((count, item) => 
-        (['FACTORY_SEALED', 'CUSTOM_SEALED'].includes(item.condition)) 
-          ? count + Number(item.quantity) 
-          : count, 0),
-      status: 'success'
+      totalValue: data.reduce((sum, item) => {
+        const price = typeof item.purchase_price === 'string' 
+          ? parseFloat(item.purchase_price) 
+          : item.purchase_price
+        return sum + (isNaN(price) ? 0 : price) * (item.quantity || 1)
+      }, 0),
+      totalItems: data.reduce((sum, item) => sum + (item.quantity || 1), 0),
+      sealedCount: data.reduce((sum, item) => {
+        if (item.condition === 'FACTORY_SEALED' || item.condition === 'CUSTOM_SEALED') {
+          return sum + (item.quantity || 1)
+        }
+        return sum
+      }, 0)
     }
 
     return stats
 
   } catch (error) {
-    // Capture des erreurs inattendues
-    console.error('Erreur inattendue lors du chargement des statistiques:', error)
+    if (error instanceof Error) {
+      console.error('Erreur dans getCollectionStats:', error.message)
+    } else {
+      console.error('Erreur inconnue dans getCollectionStats')
+    }
     return {
       totalValue: 0,
       totalItems: 0,
-      sealedCount: 0,
-      status: 'error'
+      sealedCount: 0
     }
   }
 }
+
 
 export async function getCollectionItems({
   search = '',
@@ -105,76 +97,71 @@ export async function getCollectionItems({
   limit = 12
 }: CollectionFilters = {}) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
+    if (!supabase) {
+      throw new Error('Impossible d\'initialiser le client Supabase')
+    }
     
-    // Récupération de l'authentification de manière robuste
-    const { data: authData, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    // Gestion explicite des scénarios d'authentification
-    if (authError || !authData.user) {
-      console.warn('Authentification incomplète:', { 
-        error: authError, 
-        userExists: !!authData.user 
-      })
-      
-      return { 
-        items: [], 
-        total: 0, 
-        page, 
-        limit,
-        status: 'unauthenticated' 
-      }
+    if (authError || !user) {
+      throw new Error(`Échec de l'authentification: ${authError?.message || 'Aucun utilisateur'}`)
     }
 
-    // Construction de la requête avec filtres dynamiques
+    // Construction de la requête avec les bonnes tables
     let query = supabase
-      .from('items')
-      .select('*, item_types(name)', { count: 'exact' })
-      .eq('user_id', authData.user.id)
+      .from('user_collection')
+      .select(`
+        *,
+        products (
+          name,
+          image_url,
+          category
+        )
+      `, { count: 'exact' })
+      .eq('user_id', user.id)
+      .is('sold_date', null) // Ne montrer que les items non vendus
 
-    // Application des filtres conditionnels
+    // Filtres
     if (condition) {
-      query = query.in('condition', condition.split(','))
+      const conditions = condition.split(',')
+      query = query.in('condition', conditions)
     }
 
     if (search) {
-      query = query.or(
-        `item_types.name.ilike.%${search}%,notes.ilike.%${search}%`
-      )
+      query = query.or(`products.name.ilike.%${search}%,notes.ilike.%${search}%`)
     }
 
-    // Pagination et tri
-    const { data: items, error, count } = await query
+    const { data, error, count } = await query
       .range((page - 1) * limit, page * limit - 1)
       .order('created_at', { ascending: false })
 
-    // Gestion des erreurs de récupération des items
     if (error) {
-      return { 
-        items: [], 
-        total: 0, 
-        page, 
-        limit,
-        status: 'error' 
-      }
+      throw new Error(`Erreur Supabase: ${error.message || 'Erreur inconnue'}`)
     }
 
     return { 
-      items: items || [], 
+      items: data || [],
       total: count || 0,
       page,
       limit,
       status: 'success'
     }
+
   } catch (error) {
-    // Capture des erreurs inattendues
-    console.error('Erreur inattendue lors du chargement des items:', error)
+    if (error instanceof Error) {
+      console.error('Erreur dans getCollectionItems:', error.message)
+    } else {
+      console.error('Erreur inconnue dans getCollectionItems')
+    }
+    
     return { 
       items: [], 
       total: 0, 
       page, 
       limit,
-      status: 'error' 
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Erreur inconnue'
     }
   }
 }
