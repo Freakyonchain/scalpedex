@@ -1,159 +1,69 @@
+// components/collection/ItemModal.tsx
 'use client'
 
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { PlusCircle } from 'lucide-react'
-import { createItem } from '@/lib/actions/items'
+import { CollectionItem, CONDITIONS } from '@/types/collection';
+import { SmartImage } from './SmartImage';
+import { X } from 'lucide-react';
 
-// Define the condition type to match your Supabase enum
-export type Condition = 'FACTORY_SEALED' | 'NEW' | 'USED' | 'DAMAGED'
-
-// Interface for the form data
-interface ItemFormData {
-  barcode: string
-  itemTypeId: string
-  condition: Condition
-  quantity: number
-  purchasePrice: number
-  notes: string
+interface ItemModalProps {
+  item: CollectionItem;
+  onClose: () => void;
 }
 
-export function AddItemModal() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [formData, setFormData] = useState<ItemFormData>({
-    barcode: '',
-    itemTypeId: '',
-    condition: 'FACTORY_SEALED',
-    quantity: 1,
-    purchasePrice: 0,
-    notes: ''
-  })
-
-  const CONDITIONS: Condition[] = [
-    'FACTORY_SEALED',
-    'NEW',
-    'USED',
-    'DAMAGED'
-  ]
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    try {
-      const result = await createItem(formData)
-      
-      if (result.success) {
-        toast.success('Item ajouté avec succès')
-        setIsOpen(false)
-        // Reset form
-        setFormData({
-          barcode: '',
-          itemTypeId: '',
-          condition: 'FACTORY_SEALED',
-          quantity: 1,
-          purchasePrice: 0,
-          notes: ''
-        })
-      } else {
-        toast.error(result.error || 'Erreur lors de l\'ajout')
-      }
-    } catch (error) {
-      toast.error('Erreur inattendue')
-    }
-  }
-
+export function ItemModal({ item, onClose }: ItemModalProps) {
   return (
-    <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
-        title="Ajouter un item"
-      >
-        <PlusCircle size={24} />
-      </button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-violet-900/95 p-6 rounded-xl w-full max-w-lg relative">
+        {/* Bouton fermer */}
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-violet-300 hover:text-white transition-colors"
+        >
+          <X size={24} />
+        </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-violet-900 p-6 rounded-xl w-full max-w-md">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Image */}
+          <div className="w-full md:w-1/2">
+            <SmartImage 
+              src={item.products.image_url}
+              alt={item.products.name}
+              className="w-full aspect-square rounded-lg"
+            />
+          </div>
+
+          {/* Informations */}
+          <div className="w-full md:w-1/2">
             <h2 className="text-xl font-bold text-white mb-4">
-              Ajouter un Nouvel Item
+              {item.products.name}
             </h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Code-barres"
-                value={formData.barcode}
-                onChange={(e) => setFormData(prev => ({...prev, barcode: e.target.value}))}
-                className="w-full p-2 bg-violet-800 text-white rounded-lg"
-                required
-              />
-              
-              <input
-                type="text"
-                placeholder="ID Type d'Item"
-                value={formData.itemTypeId}
-                onChange={(e) => setFormData(prev => ({...prev, itemTypeId: e.target.value}))}
-                className="w-full p-2 bg-violet-800 text-white rounded-lg"
-              />
-              
-              <select
-                value={formData.condition}
-                onChange={(e) => setFormData(prev => ({...prev, condition: e.target.value as Condition}))}
-                className="w-full p-2 bg-violet-800 text-white rounded-lg"
-              >
-                {CONDITIONS.map(condition => (
-                  <option key={condition} value={condition}>
-                    {condition.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
-              
-              <input
-                type="number"
-                placeholder="Quantité"
-                value={formData.quantity}
-                onChange={(e) => setFormData(prev => ({...prev, quantity: parseInt(e.target.value)}))}
-                className="w-full p-2 bg-violet-800 text-white rounded-lg"
-                min="1"
-              />
-              
-              <input
-                type="number"
-                placeholder="Prix d'achat"
-                value={formData.purchasePrice}
-                onChange={(e) => setFormData(prev => ({...prev, purchasePrice: parseFloat(e.target.value)}))}
-                className="w-full p-2 bg-violet-800 text-white rounded-lg"
-                step="0.01"
-                min="0"
-              />
-              
-              <textarea
-                placeholder="Notes (optionnel)"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
-                className="w-full p-2 bg-violet-800 text-white rounded-lg h-24"
-              />
-              
-              <div className="flex space-x-2">
-                <button
-                  type="submit"
-                  className="flex-1 p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
-                >
-                  Ajouter
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 bg-violet-800 text-white rounded-lg"
-                >
-                  Annuler
-                </button>
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-violet-300">État</p>
+                <p className="text-white font-medium">{CONDITIONS[item.condition]}</p>
               </div>
-            </form>
+
+              <div>
+                <p className="text-violet-300">Quantité</p>
+                <p className="text-white font-medium">{item.quantity}</p>
+              </div>
+
+              <div>
+                <p className="text-violet-300">Prix d'achat</p>
+                <p className="text-white font-medium">
+                  {Number(item.purchase_price).toLocaleString('fr-FR', {
+                    style: 'currency',
+                    currency: 'EUR'
+                  })}
+                </p>
+              </div>
+
+              {/* Vous pouvez ajouter d'autres informations ici */}
+            </div>
           </div>
         </div>
-      )}
-    </>
-  )
+      </div>
+    </div>
+  );
 }

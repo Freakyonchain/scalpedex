@@ -1,15 +1,28 @@
+// app/collection/page.tsx
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { TrendingUp, Package, DollarSign, AlertCircle, Plus } from 'lucide-react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getCollectionStats, getCollectionItems } from '@/lib/actions/collection';
+import { CollectionFilters } from '@/components/collection/CollectionFilters';
 import { CollectionGrid } from '@/components/collection/CollectionGrid';
-import { CollectionControls } from '@/components/collection/CollectionControls';
-import Link from 'next/link';
 
+// Forcer le rendu dynamique
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Types
+interface StatsCardProps {
+  title: string;
+  value: string | number;
+  icon: any;
+  subtitle?: string;
+  subtitleIcon?: any;
+  subtitleColor?: string;
+}
+
+// Composant StatsCard
 function StatsCard({ 
   title, 
   value, 
@@ -17,14 +30,7 @@ function StatsCard({
   subtitle, 
   subtitleIcon: SubIcon, 
   subtitleColor = "text-violet-400" 
-}: {
-  title: string
-  value: string | number
-  icon: any
-  subtitle?: string
-  subtitleIcon?: any
-  subtitleColor?: string
-}) {
+}: StatsCardProps) {
   return (
     <div className="p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl border border-violet-800/50">
       <div className="flex items-start justify-between">
@@ -46,6 +52,7 @@ function StatsCard({
   );
 }
 
+// État de chargement
 function LoadingState() {
   return (
     <div className="animate-pulse space-y-6">
@@ -64,7 +71,45 @@ function LoadingState() {
   );
 }
 
-export default async function CollectionDashboard({
+// État vide
+function EmptyState({ userName }: { userName: string }) {
+  return (
+    <div className="p-6 space-y-6 min-h-screen bg-gradient-to-b from-violet-950 to-black flex items-center justify-center">
+      <div className="text-center py-12">
+        <Package size={48} className="mx-auto text-violet-400 mb-4" />
+        <h3 className="text-2xl font-medium text-white mb-2">
+          Salut {userName} 👋
+        </h3>
+        <p className="text-xl text-violet-300 mb-4">
+          Ta collection est encore vide
+        </p>
+        <p className="text-violet-400 mb-6">
+          Prêt à commencer ta première collection ?
+        </p>
+        
+        <Link 
+          href="/scan" 
+          className="mt-4 inline-flex items-center justify-center px-6 py-3 
+            bg-violet-600 text-white font-semibold 
+            rounded-xl 
+            hover:bg-violet-700 
+            transition-colors 
+            duration-300 
+            shadow-lg 
+            shadow-violet-500/50 
+            hover:shadow-xl 
+            hover:scale-105"
+        >
+          <Plus size={24} className="mr-2" />
+          Ajoutez votre premier Item
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Page principale
+export default async function CollectionPage({
   searchParams
 }: {
   searchParams: { search?: string; condition?: string; page?: string }
@@ -73,80 +118,51 @@ export default async function CollectionDashboard({
     const supabase = await createClient();
     
     if (!supabase) {
-      console.error('Erreur: Client Supabase non initialisé');
       redirect('/auth/sign-in');
     }
 
-    const authResponse = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (!authResponse || !authResponse.data || !authResponse.data.user) {
+    if (!user || authError) {
       redirect('/auth/sign-in');
     }
 
-    const user = authResponse.data.user;
     const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Collectionneur';
-
     const page = Number(searchParams?.page) || 1;
     const search = searchParams?.search || '';
     const condition = searchParams?.condition || '';
 
-    const [stats, { items, total }] = await Promise.all([
+    // Récupération des données en parallèle
+    const [stats, collectionData] = await Promise.all([
       getCollectionStats(supabase, user.id).catch(() => ({
         totalValue: 0,
         totalItems: 0,
         sealedCount: 0
       })),
-      getCollectionItems({ search, condition, page, supabase, userId: user.id }).catch(() => ({ 
-        items: [], 
-        total: 0 
-      }))
+      getCollectionItems({ 
+        search, 
+        condition, 
+        page,
+        limit: 12,
+        supabase, 
+        userId: user.id 
+      })
     ]);
 
-    // Si la collection est vide
-    if (items.length === 0) {
-      return (
-        <div className="p-6 space-y-6 min-h-screen bg-gradient-to-b from-violet-950 to-black flex items-center justify-center">
-          <div className="text-center py-12">
-            <Package size={48} className="mx-auto text-violet-400 mb-4" />
-            <h3 className="text-2xl font-medium text-white mb-2">
-              Salut {userName} 👋
-            </h3>
-            <p className="text-xl text-violet-300 mb-4">
-              Ta collection est encore vide
-            </p>
-            <p className="text-violet-400 mb-6">
-              Prêt à commencer ta première collection ?
-            </p>
-            
-            <Link 
-              href="/scan" 
-              className="mt-4 inline-flex items-center justify-center px-6 py-3 
-                bg-violet-600 text-white font-semibold 
-                rounded-xl 
-                hover:bg-violet-700 
-                transition-colors 
-                duration-300 
-                shadow-lg 
-                shadow-violet-500/50 
-                hover:shadow-xl 
-                hover:scale-105 
-                focus:outline-none 
-                focus:ring-2 
-                focus:ring-violet-500 
-                focus:ring-opacity-50"
-            >
-              <Plus size={24} className="mr-2" />
-              Ajoutez votre premier Item
-            </Link>
-          </div>
-        </div>
-      );
+    // Extraire les items et le total de manière sécurisée
+    const items = collectionData?.items || [];
+    const total = collectionData?.total || 0;
+
+    // Si la collection est vide (sans filtres actifs)
+    if (items.length === 0 && !search && !condition) {
+      return <EmptyState userName={userName} />;
     }
 
-    // Si la collection n'est pas vide
+    // Affichage principal
     return (
       <div className="p-6 space-y-6 min-h-screen bg-gradient-to-b from-violet-950 to-black">
         <Suspense fallback={<LoadingState />}>
+          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="Valeur Totale"
@@ -183,13 +199,27 @@ export default async function CollectionDashboard({
             />
           </div>
 
-          <CollectionControls 
+          {/* Filtres et Recherche */}
+          <CollectionFilters 
             search={search} 
             condition={condition} 
           />
 
+          {/* Message pour les résultats filtrés */}
+          {(search || condition) && (
+            <div className="text-violet-300 mb-4">
+              {total === 0 ? (
+                <p>Aucun résultat trouvé pour votre recherche</p>
+              ) : (
+                <p>{total} résultat(s) trouvé(s)</p>
+              )}
+            </div>
+          )}
+
+          {/* Grille de la Collection */}
           <CollectionGrid items={items} />
 
+          {/* Pagination */}
           {total > 12 && (
             <div className="flex justify-center gap-2">
               {page > 1 && (
@@ -202,7 +232,8 @@ export default async function CollectionDashboard({
               )}
               
               {[...Array(Math.ceil(total / 12))].map((_, i) => {
-                if (i + 1 === page || i + 1 === 1 || i + 1 === Math.ceil(total / 12) || (i + 1 >= page - 1 && i + 1 <= page + 1)) {
+                if (i + 1 === page || i + 1 === 1 || i + 1 === Math.ceil(total / 12) || 
+                    (i + 1 >= page - 1 && i + 1 <= page + 1)) {
                   return (
                     <Link
                       key={i}
@@ -237,6 +268,10 @@ export default async function CollectionDashboard({
     );
   } catch (error) {
     console.error('Erreur dans CollectionDashboard:', error);
-    redirect('/auth/sign-in');
+    return (
+      <div className="p-6 text-red-400">
+        Une erreur est survenue lors du chargement de la collection.
+      </div>
+    );
   }
 }

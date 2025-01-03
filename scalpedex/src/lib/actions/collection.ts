@@ -90,6 +90,8 @@ export async function getCollectionStats() {
 }
 
 
+// lib/actions/collection.ts
+
 export async function getCollectionItems({
   search = '',
   condition = '',
@@ -108,37 +110,54 @@ export async function getCollectionItems({
       throw new Error(`Échec de l'authentification: ${authError?.message || 'Aucun utilisateur'}`)
     }
 
-    // Construction de la requête avec les bonnes tables
+    // Construction de la requête de base
     let query = supabase
       .from('user_collection')
       .select(`
-        *,
+        id,
+        quantity,
+        condition,
+        purchase_price,
+        created_at,
         products (
+          id,
           name,
           image_url,
           category
         )
       `, { count: 'exact' })
       .eq('user_id', user.id)
-      .is('sold_date', null) // Ne montrer que les items non vendus
+      .is('sold_date', null)
 
-    // Filtres
+    // Filtres conditions
     if (condition) {
       const conditions = condition.split(',')
       query = query.in('condition', conditions)
     }
 
-    if (search) {
-      query = query.or(`products.name.ilike.%${search}%,notes.ilike.%${search}%`)
+    // Recherche textuelle
+    if (search && search.trim()) {
+      // Utilisation de ilike pour une recherche insensible à la casse
+      query = query.ilike('products.name', `%${search.trim()}%`)
     }
 
+    // Exécution de la requête avec pagination
     const { data, error, count } = await query
-      .range((page - 1) * limit, page * limit - 1)
       .order('created_at', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1)
 
     if (error) {
       throw new Error(`Erreur Supabase: ${error.message || 'Erreur inconnue'}`)
     }
+
+    // Log pour debug
+    console.log("Paramètres de recherche:", {
+      searchTerm: search,
+      condition: condition,
+      resultsCount: count,
+      pageSize: limit,
+      currentPage: page
+    })
 
     return { 
       items: data || [],
@@ -149,12 +168,7 @@ export async function getCollectionItems({
     }
 
   } catch (error) {
-    if (error instanceof Error) {
-      console.error('Erreur dans getCollectionItems:', error.message)
-    } else {
-      console.error('Erreur inconnue dans getCollectionItems')
-    }
-    
+    console.error('Erreur dans getCollectionItems:', error)
     return { 
       items: [], 
       total: 0, 
