@@ -14,7 +14,7 @@ interface CollectionFilters {
 
 const AddItemSchema = z.object({
   barcode: z.string().min(1, "Le code-barres est requis"),
-  item_type_id: z.string().min(1, "L'ID du type d'item est requis"),
+  product_id: z.string().min(1, "L'ID du produit est requis"),
   condition: z.enum(['FACTORY_SEALED', 'CUSTOM_SEALED', 'MINT', 'NEAR_MINT', 'PLAYED'])
     .optional()
     .default('FACTORY_SEALED'),
@@ -46,41 +46,48 @@ export async function getCollectionStats() {
       throw new Error(`Échec de l'authentification: ${authError?.message || 'Aucun utilisateur'}`)
     }
 
-    // Utilisation de la bonne table 'user_collection'
     const { data, error } = await supabase
       .from('user_collection')
-      .select('purchase_price, condition, quantity')
+      .select(`
+        *,
+        products:product_id (
+          product_stats (
+            avg_price_7d
+          )
+        )
+      `)
       .eq('user_id', user.id)
-      .is('sold_date', null) // Ne compter que les items non vendus
+      .is('sold_date', null)
 
     if (error) {
       throw new Error(`Erreur Supabase: ${error.message || 'Erreur inconnue'}`)
     }
 
-    const stats = {
-      totalValue: data.reduce((sum, item) => {
-        const price = typeof item.purchase_price === 'string' 
-          ? parseFloat(item.purchase_price) 
-          : item.purchase_price
-        return sum + (isNaN(price) ? 0 : price) * (item.quantity || 1)
-      }, 0),
-      totalItems: data.reduce((sum, item) => sum + (item.quantity || 1), 0),
-      sealedCount: data.reduce((sum, item) => {
-        if (item.condition === 'FACTORY_SEALED' || item.condition === 'CUSTOM_SEALED') {
-          return sum + (item.quantity || 1)
-        }
-        return sum
-      }, 0)
-    }
+    const stats = data.reduce((acc, item) => {
+      const currentValue = item.products?.product_stats?.[0]?.avg_price_7d || item.purchase_price;
+      const price = typeof currentValue === 'string' 
+        ? parseFloat(currentValue) 
+        : currentValue;
+        
+      return {
+        totalValue: acc.totalValue + (isNaN(price) ? 0 : price) * (item.quantity || 1),
+        totalItems: acc.totalItems + (item.quantity || 1),
+        sealedCount: acc.sealedCount + (
+          (item.condition === 'FACTORY_SEALED' || item.condition === 'CUSTOM_SEALED') 
+            ? (item.quantity || 1) 
+            : 0
+        )
+      };
+    }, {
+      totalValue: 0,
+      totalItems: 0,
+      sealedCount: 0
+    });
 
-    return stats
+    return stats;
 
   } catch (error) {
-    if (error instanceof Error) {
-      console.error('Erreur dans getCollectionStats:', error.message)
-    } else {
-      console.error('Erreur inconnue dans getCollectionStats')
-    }
+    console.error('Erreur dans getCollectionStats:', error)
     return {
       totalValue: 0,
       totalItems: 0,
@@ -88,9 +95,6 @@ export async function getCollectionStats() {
     }
   }
 }
-
-
-// lib/actions/collection.ts
 
 export async function getCollectionItems({
   search = '',
@@ -110,20 +114,27 @@ export async function getCollectionItems({
       throw new Error(`Échec de l'authentification: ${authError?.message || 'Aucun utilisateur'}`)
     }
 
-    // Construction de la requête de base
+    // Construction de la requête de base avec les bonnes relations
     let query = supabase
       .from('user_collection')
       .select(`
-        id,
-        quantity,
-        condition,
-        purchase_price,
-        created_at,
-        products (
+        *,
+        products:product_id (
           id,
           name,
           image_url,
-          category
+          msrp,
+          barcode,
+          release_date,
+          category:category_id (
+            id,
+            name
+          ),
+          product_stats!inner (
+            avg_price_7d,
+            avg_price_24h,
+            trend_24h
+          )
         )
       `, { count: 'exact' })
       .eq('user_id', user.id)
@@ -137,8 +148,10 @@ export async function getCollectionItems({
 
     // Recherche textuelle
     if (search && search.trim()) {
-      // Utilisation de ilike pour une recherche insensible à la casse
-      query = query.ilike('products.name', `%${search.trim()}%`)
+      query = query.textSearch('products.name', search.trim(), {
+        type: 'websearch',
+        config: 'english'
+      })
     }
 
     // Exécution de la requête avec pagination
@@ -150,17 +163,19 @@ export async function getCollectionItems({
       throw new Error(`Erreur Supabase: ${error.message || 'Erreur inconnue'}`)
     }
 
-    // Log pour debug
-    console.log("Paramètres de recherche:", {
-      searchTerm: search,
-      condition: condition,
-      resultsCount: count,
-      pageSize: limit,
-      currentPage: page
-    })
+    // Transformation des données pour le frontend
+    const items = data?.map(item => ({
+      ...item,
+      product: {
+        ...item.products,
+        category_name: item.products?.category?.name || 'Non catégorisé',
+        current_value: item.products?.product_stats?.[0]?.avg_price_7d || item.products?.msrp || 0,
+        trend: item.products?.product_stats?.[0]?.trend_24h || 0
+      }
+    })) || [];
 
     return { 
-      items: data || [],
+      items,
       total: count || 0,
       page,
       limit,
@@ -182,32 +197,32 @@ export async function getCollectionItems({
 
 export async function addItem(rawData: unknown) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
-    // Récupération de l'utilisateur connecté
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Non authentifié')
 
-    // Validation des données
     const validatedData = AddItemSchema.parse(rawData)
 
-    // Vérification du type d'item
-    const { data: itemType, error: itemTypeError } = await supabase
-      .from('item_types')
+    // Vérification que le produit existe
+    const { data: product, error: productError } = await supabase
+      .from('products')
       .select('*')
-      .eq('id', validatedData.item_type_id)
+      .eq('id', validatedData.product_id)
       .single()
 
-    if (itemTypeError || !itemType) {
-      throw new Error("Type d'item invalide")
+    if (productError || !product) {
+      throw new Error("Produit invalide")
     }
 
     // Recherche d'un item existant
     const { data: existingItem, error: existingItemError } = await supabase
-      .from('items')
+      .from('user_collection')
       .select('*')
-      .eq('barcode', validatedData.barcode)
+      .eq('product_id', validatedData.product_id)
       .eq('user_id', user.id)
+      .eq('condition', validatedData.condition)
+      .is('sold_date', null)
       .single()
 
     if (existingItemError && existingItemError.code !== 'PGRST116') {
@@ -218,14 +233,12 @@ export async function addItem(rawData: unknown) {
     if (existingItem) {
       // Mise à jour de l'item existant
       const { data: updatedItem, error: updateError } = await supabase
-        .from('items')
+        .from('user_collection')
         .update({ 
-          quantity: existingItem.quantity + (validatedData.quantity || 1),
-          purchase_price: validatedData.purchase_price
+          quantity: existingItem.quantity + (validatedData.quantity || 1)
         })
         .eq('id', existingItem.id)
-        .eq('user_id', user.id)
-        .select('*, item_types(name)')
+        .select()
         .single()
 
       if (updateError) throw updateError
@@ -238,12 +251,17 @@ export async function addItem(rawData: unknown) {
     } else {
       // Création d'un nouvel item
       const { data: newItem, error: insertError } = await supabase
-        .from('items')
+        .from('user_collection')
         .insert({
-          ...validatedData,
-          user_id: user.id
+          user_id: user.id,
+          product_id: validatedData.product_id,
+          condition: validatedData.condition,
+          purchase_price: validatedData.purchase_price,
+          purchase_date: validatedData.purchase_date,
+          quantity: validatedData.quantity,
+          notes: validatedData.notes
         })
-        .select('*, item_types(name)')
+        .select()
         .single()
 
       if (insertError) throw insertError
@@ -255,13 +273,10 @@ export async function addItem(rawData: unknown) {
       }
     }
 
-    // Invalider le cache pour mettre à jour l'affichage
     revalidatePath('/collection')
-
     return result
 
   } catch (error) {
-    // Gestion des erreurs de validation
     if (error instanceof z.ZodError) {
       return { 
         success: false, 
@@ -270,29 +285,25 @@ export async function addItem(rawData: unknown) {
       }
     }
 
-    // Gestion des autres erreurs
     return handleSupabaseError(error)
   }
 }
 
 export async function deleteItem(itemId: string) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
-    // Récupération de l'utilisateur connecté
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Non authentifié')
 
-    // Suppression de l'item
     const { error } = await supabase
-      .from('items')
+      .from('user_collection')
       .delete()
       .eq('id', itemId)
       .eq('user_id', user.id)
 
     if (error) throw error
 
-    // Invalider le cache
     revalidatePath('/collection')
 
     return { 

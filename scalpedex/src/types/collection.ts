@@ -10,11 +10,21 @@ export const CONDITIONS: Record<Condition, string> = {
   PLAYED: 'Joué'
 };
 
+// Mettre à jour l'interface Product pour inclure les stats et la catégorie
 export interface Product {
   id: string;
   name: string;
   image_url: string;
-  category?: string;
+  msrp?: number;
+  category?: {
+    id: string;
+    name: string;
+  };
+  product_stats?: {
+    avg_price_7d?: number;
+    avg_price_24h?: number;
+    trend_24h?: number;
+  }[];
 }
 
 export interface CollectionItem {
@@ -24,6 +34,8 @@ export interface CollectionItem {
   purchase_price: number;
   products: Product;
   notes?: string;
-  created_at?: string;
+  created_at: string;
   updated_at?: string;
+  current_value?: number;
+  trend?: number;
 }

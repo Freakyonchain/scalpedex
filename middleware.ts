@@ -1,3 +1,4 @@
+// middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -8,6 +9,11 @@ export async function middleware(request: NextRequest) {
       headers: request.headers,
     },
   })
+
+  // Ajout des headers CORS
+  response.headers.set('Access-Control-Allow-Origin', '*')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,7 +61,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Vos logiques d'authentification ici
-
   return response
+}
+
+export const config = {
+  matcher: '/api/:path*',
 }
