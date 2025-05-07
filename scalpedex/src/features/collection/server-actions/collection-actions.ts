@@ -145,9 +145,12 @@ export async function getCollectionItems({
           id,
           name,
           image_url,
-          category
+          product_categories (
+            name
+          )
         )
       `, { count: 'exact' })
+      
       .eq('user_id', user.id)
       .is('sold_date', null);
 

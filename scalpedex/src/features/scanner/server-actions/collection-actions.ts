@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@server/supabase'
 import { QuickAddData } from '../types/scanner-types';
 import { revalidatePath } from 'next/cache';
 

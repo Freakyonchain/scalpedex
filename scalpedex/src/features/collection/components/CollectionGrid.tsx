@@ -22,8 +22,8 @@ export function CollectionGrid({ initialParams = {} }: CollectionGridProps) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {[...Array(8)].map((_, i) => (
+<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+{[...Array(8)].map((_, i) => (
           <div key={i} className="h-80 bg-violet-900/20 rounded-xl animate-pulse" />
         ))}
       </div>
@@ -32,8 +32,8 @@ export function CollectionGrid({ initialParams = {} }: CollectionGridProps) {
 
   if (error) {
     return (
-      <div className="p-6 bg-red-900/20 border border-red-800/30 rounded-xl text-red-300">
-        <p>{error}</p>
+<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+<p>{error}</p>
       </div>
     );
   }
@@ -49,8 +49,8 @@ export function CollectionGrid({ initialParams = {} }: CollectionGridProps) {
   }
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {items.map((item) => (
+<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+{items.map((item) => (
           <ItemCard
             key={item.id}
             item={item}

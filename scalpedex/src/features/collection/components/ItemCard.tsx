@@ -1,4 +1,3 @@
-// /src/features/collection/components/ItemCard.tsx
 'use client';
 
 import React from 'react';
@@ -17,18 +16,18 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
     <div 
       onClick={onClick}
       className="group p-4 bg-violet-900/20 backdrop-blur-sm rounded-xl 
-               border border-violet-800/50 hover:border-violet-600/50 
-               transition-all duration-300 cursor-pointer
-               hover:transform hover:scale-[1.02]"
+                 border border-violet-800/50 hover:border-violet-600/50 
+                 transition-all duration-300 cursor-pointer
+                 hover:transform hover:scale-[1.02]"
     >
       <SmartImage 
         src={product.imageUrl}
         alt={product.name}
-        className="w-full aspect-square mb-3"
+        className="w-full aspect-square mb-3 object-cover transition-transform duration-300 group-hover:scale-105 rounded-md"
       />
       
       <h3 className="font-medium text-white group-hover:text-violet-300 
-                   transition-colors truncate">
+                     transition-colors truncate">
         {product.name}
       </h3>
       

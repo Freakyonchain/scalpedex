@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import '@/app/globals.css'
-import { AuthProvider } from '@/components/providers/AuthProvider'
-import { BottomNav } from '@/components/layout/BottomNav'
+import { AuthProvider } from '@shared/components/auth/AuthProvider'
+import { BottomNav } from '@/shared/components/layout/BottomNav'
 import { Toaster } from 'sonner'
 
 export default function RootLayout({

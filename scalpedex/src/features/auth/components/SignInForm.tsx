@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useSignIn } from '../hooks/useAuth';
+import { useSignIn } from '../hooks/useSignIn'
 import { Button } from '@/shared/components/ui/Button';
 import { Input } from '@/shared/components/ui/Input';
 import { Alert } from '@/shared/components/ui/Alert';

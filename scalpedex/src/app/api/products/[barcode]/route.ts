@@ -1,5 +1,5 @@
 // app/api/products/[barcode]/route.ts
-import { createClientBrowser } from '@/lib/supabase/client'
+import { createClient } from '@server/supabase'
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 
