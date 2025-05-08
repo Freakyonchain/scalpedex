@@ -1,5 +1,4 @@
-// src/shared/components/layout/BottomNav.tsx
-'use client'
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -7,76 +6,40 @@ import { Scan, TrendingUp, Package, User } from 'lucide-react';
 
 export function BottomNav() {
   const pathname = usePathname();
-  
+
+  const isActive = (path: string) =>
+    pathname === path ? 'text-white' : 'text-violet-300/70';
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-r from-violet-800 to-purple-900 shadow-lg shadow-black/30 border-t border-violet-700/50 z-50">
-      <div className="max-w-lg mx-auto h-full flex items-center justify-around">
-        <Link 
-          href="/scan" 
-          className={`flex flex-col items-center justify-center w-20 h-full relative ${
-            pathname === '/scan' 
-              ? 'text-white' 
-              : 'text-violet-200/70'
-          }`}
-        >
-          {pathname === '/scan' && (
-            <div className="absolute top-0 w-10 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-lg" />
-          )}
-          <div className={`p-1.5 rounded-full ${pathname === '/scan' ? 'bg-purple-600/30' : ''}`}>
-            <Scan size={18} />
-          </div>
-          <span className="text-xs mt-1 font-medium">Scan</span>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-black/40 backdrop-blur-md border-t border-violet-800/40">
+      <div className="relative max-w-md mx-auto h-full flex items-center justify-between px-6">
+
+        {/* LEFT */}
+        <Link href="/collection" className={`flex flex-col items-center ${isActive('/collection')}`}>
+          <Package size={22} />
+          <span className="text-xs mt-1">Collection</span>
         </Link>
-        
-        <Link 
-          href="/collection" 
-          className={`flex flex-col items-center justify-center w-20 h-full relative ${
-            pathname === '/collection' 
-              ? 'text-white' 
-              : 'text-violet-200/70'
-          }`}
-        >
-          {pathname === '/collection' && (
-            <div className="absolute top-0 w-10 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-lg" />
-          )}
-          <div className={`p-1.5 rounded-full ${pathname === '/collection' ? 'bg-purple-600/30' : ''}`}>
-            <Package size={18} />
-          </div>
-          <span className="text-xs mt-1 font-medium">Collection</span>
+
+        {/* PLACEHOLDER MIDDLE (vide pour équilibre visuel) */}
+        <div className="w-20" />
+
+        {/* RIGHT */}
+        <Link href="/market" className={`flex flex-col items-center ${isActive('/market')}`}>
+          <TrendingUp size={22} />
+          <span className="text-xs mt-1">Market</span>
         </Link>
-        
-        <Link 
-          href="/market" 
-          className={`flex flex-col items-center justify-center w-20 h-full relative ${
-            pathname === '/market' 
-              ? 'text-white' 
-              : 'text-violet-200/70'
-          }`}
-        >
-          {pathname === '/market' && (
-            <div className="absolute top-0 w-10 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-lg" />
-          )}
-          <div className={`p-1.5 rounded-full ${pathname === '/market' ? 'bg-purple-600/30' : ''}`}>
-            <TrendingUp size={18} />
-          </div>
-          <span className="text-xs mt-1 font-medium">Market</span>
+
+        <Link href="/profile" className={`flex flex-col items-center ${isActive('/profile')}`}>
+          <User size={22} />
+          <span className="text-xs mt-1">Profil</span>
         </Link>
-        
-        <Link 
-          href="/profile" 
-          className={`flex flex-col items-center justify-center w-20 h-full relative ${
-            pathname === '/profile' 
-              ? 'text-white' 
-              : 'text-violet-200/70'
-          }`}
+
+        {/* CENTER SCAN BUTTON (floating above) */}
+        <Link
+          href="/scan"
+          className="absolute -top-6 left-1/2 -translate-x-1/2 bg-violet-600 hover:bg-violet-500 p-4 rounded-full shadow-xl border-4 border-black text-white transition"
         >
-          {pathname === '/profile' && (
-            <div className="absolute top-0 w-10 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-b-lg" />
-          )}
-          <div className={`p-1.5 rounded-full ${pathname === '/profile' ? 'bg-purple-600/30' : ''}`}>
-            <User size={18} />
-          </div>
-          <span className="text-xs mt-1 font-medium">Profil</span>
+          <Scan size={28} />
         </Link>
       </div>
     </nav>
