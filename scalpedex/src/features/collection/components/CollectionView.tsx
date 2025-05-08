@@ -1,4 +1,4 @@
-// /src/features/collection/components/CollectionView.tsx
+// src/features/collection/components/CollectionView.tsx
 import React from 'react';
 import { Suspense } from 'react';
 import { getUserSession } from '@/features/auth/server-actions/auth-actions';
@@ -8,23 +8,25 @@ import { CollectionGrid } from './CollectionGrid';
 import { CollectionStats } from './CollectionStats';
 import { EmptyState } from './EmptyState';
 import { Pagination } from './Pagination';
+import { Package } from 'lucide-react';
 
+// Définir le type de searchParams pour être compatible avec la version asynchrone
 interface CollectionViewProps {
-  searchParams: { search?: string; condition?: string; page?: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }
 
 async function CollectionLoading() {
   return (
-    <div className="animate-pulse space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="animate-pulse space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-32 bg-violet-900/20 rounded-xl" />
+          <div key={i} className="h-24 bg-violet-900/20 rounded-xl" />
         ))}
       </div>
       <div className="h-12 bg-violet-900/20 rounded-lg w-full max-w-md" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="h-80 bg-violet-900/20 rounded-xl" />
+          <div key={i} className="h-52 bg-violet-900/20 rounded-xl" />
         ))}
       </div>
     </div>
@@ -32,9 +34,16 @@ async function CollectionLoading() {
 }
 
 export default async function CollectionView({ searchParams }: CollectionViewProps) {
-  const page = Number(searchParams?.page) || 1;
-  const search = searchParams?.search || '';
-  const condition = searchParams?.condition || '';
+  // Extraction sécurisée des valeurs de searchParams
+  const pageParam = searchParams.page;
+  const pageNum = typeof pageParam === 'string' ? parseInt(pageParam, 10) : 1;
+  const page = isNaN(pageNum) ? 1 : pageNum;
+  
+  const searchParam = searchParams.search;
+  const search = typeof searchParam === 'string' ? searchParam : '';
+  
+  const conditionParam = searchParams.condition;
+  const condition = typeof conditionParam === 'string' ? conditionParam : '';
   
   // Récupérer la session utilisateur
   const { user } = await getUserSession();
@@ -54,17 +63,31 @@ export default async function CollectionView({ searchParams }: CollectionViewPro
   }
 
   return (
-    <div className="space-y-6">
+    <div className="px-2 space-y-4 pb-20">
+      <header className="mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Package size={20} className="text-violet-400" />
+          <h1 className="text-2xl font-bold text-white">Ma Collection</h1>
+        </div>
+        <p className="text-sm text-violet-300">
+          Gérez et suivez vos produits collectionnés
+        </p>
+      </header>
+      
       <Suspense fallback={<CollectionLoading />}>
         {/* Stats Cards */}
-        <CollectionStats />
+        <div className="mb-6">
+          <CollectionStats />
+        </div>
 
         {/* Filtres et Recherche */}
-        <CollectionFilters />
+        <div className="sticky top-0 z-10 py-2 bg-black/50 backdrop-blur-md -mx-2 px-2 mb-4">
+          <CollectionFilters />
+        </div>
 
         {/* Message pour les résultats filtrés */}
         {(search || condition) && (
-          <div className="text-violet-300 mb-4">
+          <div className="text-violet-300 text-sm mb-3">
             {collectionData.total === 0 ? (
               <p>Aucun résultat trouvé pour votre recherche</p>
             ) : (
