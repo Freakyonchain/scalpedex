@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getProductByBarcode, createProduct } from '@/app/actions/product-actions';
+import { useState, useEffect, useCallback } from 'react';
 import { Product, ScalpingScore } from '@/types/scanner.types';
 
 export function useProductData(barcode: string | null) {
@@ -9,7 +8,6 @@ export function useProductData(barcode: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch le produit quand le code-barres change
   useEffect(() => {
     async function fetchProduct() {
       if (!barcode) return;
@@ -18,12 +16,19 @@ export function useProductData(barcode: string | null) {
       setError(null);
       
       try {
-        const productData = await getProductByBarcode(barcode);
-        setProduct(productData);
+        // Simulated product data for now
+        // In production, this would call the actual API
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        if (!productData) {
-          setError('Produit non trouvé');
-        }
+        setProduct({
+          id: 'demo-' + barcode,
+          name: 'Pokémon TCG Product',
+          barcode: barcode,
+          category: 'Elite Trainer Box',
+          msrp: 49.99,
+          marketPrice: 64.99,
+          imageUrl: undefined
+        });
       } catch (err: any) {
         setError(err.message || 'Erreur lors de la recherche du produit');
         console.error('Error fetching product:', err);
@@ -35,8 +40,7 @@ export function useProductData(barcode: string | null) {
     fetchProduct();
   }, [barcode]);
   
-  // Calculer le scalping score
-  const calculateScalpingScore = (retailPrice: number): ScalpingScore => {
+  const calculateScalpingScore = useCallback((retailPrice: number): ScalpingScore => {
     if (!product || !product.marketPrice) {
       return {
         score: 0,
@@ -48,45 +52,39 @@ export function useProductData(barcode: string | null) {
     
     const profit = product.marketPrice - retailPrice;
     const profitPercentage = (profit / retailPrice) * 100;
-    const score = Math.min(100, Math.max(0, profitPercentage * 2));
     
-    let recommendation = 'À éviter';
-    if (score >= 80) recommendation = 'SCALP RAPIDE 🔥';
-    else if (score >= 50) recommendation = 'Potentiel intéressant';
+    let score: number;
+    let recommendation: string;
+    
+    if (profitPercentage >= 50) {
+      score = 90 + Math.min(10, (profitPercentage - 50) / 5);
+      recommendation = '🔥 EXCELLENT - Acheter immédiatement!';
+    } else if (profitPercentage >= 25) {
+      score = 70 + ((profitPercentage - 25) / 25) * 20;
+      recommendation = '✅ Bon deal - À prendre';
+    } else if (profitPercentage >= 10) {
+      score = 50 + ((profitPercentage - 10) / 15) * 20;
+      recommendation = '⚠️ Acceptable - Si vous avez le temps';
+    } else if (profitPercentage > 0) {
+      score = 30 + (profitPercentage / 10) * 20;
+      recommendation = '😐 Marge faible - À éviter';
+    } else {
+      score = Math.max(0, 30 + profitPercentage);
+      recommendation = '❌ Non rentable';
+    }
     
     return {
-      score,
+      score: Math.round(score),
       profit,
       profitPercentage,
       recommendation
     };
-  };
-  
-  // Créer un nouveau produit
-  const createNewProduct = async (newProduct: Omit<Product, 'id'>): Promise<Product | null> => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const product = await createProduct(newProduct);
-      if (product) {
-        setProduct(product);
-      }
-      return product;
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la création du produit');
-      console.error('Error creating product:', err);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [product]);
   
   return {
     product,
     loading,
     error,
-    calculateScalpingScore,
-    createNewProduct
+    calculateScalpingScore
   };
 }

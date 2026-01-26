@@ -16,12 +16,10 @@ export function useScanner({ onScanSuccess, elementId = 'reader' }: UseScannerOp
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialiser le scanner
   useEffect(() => {
     const scannerInstance = new Html5Qrcode(elementId);
     setScanner(scannerInstance);
 
-    // Nettoyer à la fin
     return () => {
       if (scannerInstance && scanStatus === 'scanning') {
         scannerInstance.stop().catch(console.warn);
@@ -29,7 +27,6 @@ export function useScanner({ onScanSuccess, elementId = 'reader' }: UseScannerOp
     };
   }, [elementId]);
 
-  // Callback quand un code-barres est détecté
   const handleScanSuccess = useCallback((decodedText: string) => {
     if (navigator.vibrate) {
       navigator.vibrate([100, 50, 100]);
@@ -43,23 +40,19 @@ export function useScanner({ onScanSuccess, elementId = 'reader' }: UseScannerOp
     setLastResult(result);
     setScanStatus('detected');
 
-    // Notifier l'UI
     toast.success('Code-barres détecté', {
       description: decodedText,
     });
 
-    // Callback externe si fourni
     if (onScanSuccess) {
       onScanSuccess(result);
     }
 
-    // Arrêter le scan
     if (scanner && scanStatus === 'scanning') {
       scanner.stop().catch(console.warn);
     }
   }, [scanner, scanStatus, onScanSuccess]);
 
-  // Démarrer le scan
   const startScanning = useCallback(async () => {
     if (!scanner) return;
 
@@ -75,7 +68,7 @@ export function useScanner({ onScanSuccess, elementId = 'reader' }: UseScannerOp
           aspectRatio: 1.0,
         },
         handleScanSuccess,
-        () => {} // Ignorer les erreurs intermédiaires
+        () => {}
       );
     } catch (err: any) {
       setError("Impossible d'accéder à la caméra. Vérifiez vos permissions.");
@@ -84,7 +77,6 @@ export function useScanner({ onScanSuccess, elementId = 'reader' }: UseScannerOp
     }
   }, [scanner, handleScanSuccess]);
 
-  // Arrêter le scan
   const stopScanning = useCallback(async () => {
     if (scanner && scanStatus === 'scanning') {
       try {
@@ -96,12 +88,10 @@ export function useScanner({ onScanSuccess, elementId = 'reader' }: UseScannerOp
     }
   }, [scanner, scanStatus]);
 
-  // Scan manuel
   const scanManually = useCallback((barcode: string) => {
     handleScanSuccess(barcode);
   }, [handleScanSuccess]);
 
-  // Reset tout
   const resetScan = useCallback(() => {
     stopScanning();
     setLastResult(null);

@@ -1,4 +1,4 @@
-// /src/features/collection/types/collection.types.ts
+// /src/types/collection.types.ts
 
 export type Condition = 'FACTORY_SEALED' | 'CUSTOM_SEALED' | 'MINT' | 'NEAR_MINT' | 'PLAYED';
 

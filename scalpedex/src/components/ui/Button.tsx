@@ -1,68 +1,114 @@
-// /src/shared/components/ui/Button.tsx
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
+'use client';
 
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "bg-violet-600 text-white hover:bg-violet-700",
-        secondary: "bg-violet-900/50 text-violet-300 hover:bg-violet-800/50",
-        outline: "border border-violet-800/50 bg-transparent text-violet-300 hover:bg-violet-900/50",
-        ghost: "bg-transparent text-violet-300 hover:bg-violet-900/30 hover:text-violet-200",
-        destructive: "bg-red-900/30 text-red-300 hover:bg-red-900/50 hover:text-red-200",
-        link: "bg-transparent text-violet-400 underline-offset-4 hover:text-violet-300 hover:underline"
-      },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-lg px-6 text-base",
-        icon: "h-10 w-10"
-      }
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default"
-    }
-  }
-);
-
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
+  variant?: 'primary' | 'profit' | 'ghost' | 'outline' | 'danger';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   isLoading?: boolean;
   loadingText?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  children: React.ReactNode;
+  fullWidth?: boolean;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, isLoading, loadingText, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    
+const variants = {
+  primary: `
+    bg-gradient-to-r from-primary to-primary/80
+    text-white font-semibold
+    shadow-btn-primary hover:shadow-btn-primary-hover
+    border-0
+  `,
+  profit: `
+    bg-gradient-to-r from-profit to-profit-dark
+    text-black font-bold
+    shadow-btn-profit hover:shadow-btn-profit-hover
+    border-0
+  `,
+  ghost: `
+    bg-transparent hover:bg-white/5
+    text-zinc-400 hover:text-white
+    border border-white/10 hover:border-white/20
+  `,
+  outline: `
+    bg-transparent hover:bg-primary/10
+    text-primary hover:text-primary
+    border border-primary/30 hover:border-primary/50
+  `,
+  danger: `
+    bg-gradient-to-r from-loss to-loss-dark
+    text-white font-semibold
+    shadow-glow-loss hover:shadow-glow-loss
+    border-0
+  `,
+};
+
+const sizes = {
+  sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
+  md: 'h-10 px-4 text-sm gap-2 rounded-lg',
+  lg: 'h-12 px-6 text-base gap-2.5 rounded-xl',
+  xl: 'h-14 px-8 text-lg gap-3 rounded-xl',
+};
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant = 'primary',
+      size = 'md',
+      isLoading = false,
+      loadingText,
+      leftIcon,
+      rightIcon,
+      children,
+      fullWidth = false,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+      <motion.button
         ref={ref}
-        disabled={isLoading || props.disabled}
+        whileHover={{ scale: disabled || isLoading ? 1 : 1.02 }}
+        whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
+        transition={{ duration: 0.15 }}
+        disabled={disabled || isLoading}
+        className={cn(
+          // Base styles
+          'inline-flex items-center justify-center',
+          'font-medium transition-all duration-200',
+          'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-black',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
+          // Variant
+          variants[variant],
+          // Size
+          sizes[size],
+          // Full width
+          fullWidth && 'w-full',
+          className
+        )}
         {...props}
       >
         {isLoading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {loadingText || children}
+            <Loader2 className="animate-spin" size={size === 'sm' ? 14 : size === 'xl' ? 22 : 18} />
+            {loadingText && <span>{loadingText}</span>}
           </>
         ) : (
-          children
+          <>
+            {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+            {children}
+            {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+          </>
         )}
-      </Comp>
+      </motion.button>
     );
   }
 );
-Button.displayName = "Button";
 
-export { Button, buttonVariants };
+Button.displayName = 'Button';
