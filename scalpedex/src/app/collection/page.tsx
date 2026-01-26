@@ -1,6 +1,6 @@
 // /src/app/collection/page.tsx
 import { Suspense } from 'react';
-import CollectionView from '@/features/collection/components/CollectionView';
+import CollectionView from '@/components/domain/collection/CollectionView';
 
 // Forcer le rendu dynamique
 export const dynamic = 'force-dynamic';

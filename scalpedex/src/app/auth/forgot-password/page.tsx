@@ -1,8 +1,8 @@
 // /src/app/auth/forgot-password/page.tsx
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import AuthLayout from '@/features/auth/components/AuthLayout';
-import { ForgotPasswordForm } from '@/features/auth/components/ForgotPasswordForm';
+import AuthLayout from '@/components/domain/auth/AuthLayout';
+import { ForgotPasswordForm } from '@/components/domain/auth/ForgotPasswordForm';
 
 export default function ForgotPasswordPage() {
   return (

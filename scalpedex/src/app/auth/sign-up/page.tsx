@@ -1,7 +1,7 @@
 // /src/app/auth/sign-up/page.tsx
 import Link from 'next/link';
-import AuthLayout from '@/features/auth/components/AuthLayout';
-import { SignUpForm } from '@/features/auth/components/SignUpForm';
+import AuthLayout from '@/components/domain/auth/AuthLayout';
+import { SignUpForm } from '@/components/domain/auth/SignUpForm';
 
 export default function SignUpPage() {
   return (

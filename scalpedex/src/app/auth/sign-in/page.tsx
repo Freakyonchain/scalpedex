@@ -1,7 +1,7 @@
 // /src/app/auth/sign-in/page.tsx
 import Link from 'next/link';
-import AuthLayout from '@/features/auth/components/AuthLayout';
-import { SignInForm } from '@/features/auth/components/SignInForm';
+import AuthLayout from '@/components/domain/auth/AuthLayout';
+import { SignInForm } from '@/components/domain/auth/SignInForm';
 
 export default function SignInPage() {
   return (

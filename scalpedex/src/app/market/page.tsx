@@ -1,6 +1,6 @@
 // /src/app/market/page.tsx
 import { Suspense } from 'react';
-import MarketView from '@/features/market/components/MarketView';
+import MarketView from '@/components/domain/market/MarketView';
 
 // Forcer le rendu dynamique
 export const dynamic = 'force-dynamic';

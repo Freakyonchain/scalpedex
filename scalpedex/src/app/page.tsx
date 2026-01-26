@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { Scan, Sparkles, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createClientBrowser } from '@client/supabase'
-import { Button } from '@/shared/components/ui/button'
+import { createClientBrowser } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 
 export default function Home() {

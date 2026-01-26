@@ -1,6 +1,6 @@
 // /src/app/news/page.tsx
 import { Suspense } from 'react';
-import NewsView from '@/features/news/components/NewsView';
+import NewsView from '@/components/domain/news/NewsView';
 
 // Forcer le rendu dynamique
 export const dynamic = 'force-dynamic';

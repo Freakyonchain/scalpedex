@@ -1,10 +1,10 @@
 // /src/app/news/[id]/page.tsx
 import React from 'react';
 import { Suspense } from 'react';
-import { getNewsById } from '@/features/news/server-actions/news-actions';
+import { getNewsById } from '@/app/actions/news-actions';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { formatTimeAgo } from '@/features/news/utils/news-formatters';
+import { formatTimeAgo } from '@/lib/utils/news-formatters';
 import { notFound } from 'next/navigation';
 
 // Forcer le rendu dynamique

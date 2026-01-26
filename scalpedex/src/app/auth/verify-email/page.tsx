@@ -1,8 +1,8 @@
 // /src/app/auth/verify-email/page.tsx
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import AuthLayout from '@/features/auth/components/AuthLayout';
-import { VerifyEmailView } from '@/features/auth/components/VerifyEmailView';
+import AuthLayout from '@/components/domain/auth/AuthLayout';
+import { VerifyEmailView } from '@/components/domain/auth/VerifyEmailView';
 
 export default function VerifyEmailPage() {
   return (

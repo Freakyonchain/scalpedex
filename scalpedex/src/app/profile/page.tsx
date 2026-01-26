@@ -1,6 +1,6 @@
 // /src/app/profile/page.tsx
 import { Suspense } from 'react';
-import ProfileView from '@/features/profile/components/ProfileView';
+import ProfileView from '@/components/domain/profile/ProfileView';
 
 // Forcer le rendu dynamique
 export const dynamic = 'force-dynamic';

@@ -2,8 +2,8 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { getProfileData } from '@/features/profile/server-actions/profile-actions';
-import { SettingsForm } from '@/features/profile/components/SettingsForm';
+import { getProfileData } from '@/app/actions/profile-actions';
+import { SettingsForm } from '@/components/domain/profile/SettingsForm';
 
 // Forcer le rendu dynamique
 export const dynamic = 'force-dynamic';

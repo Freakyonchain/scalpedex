@@ -1,5 +1,5 @@
 // /src/app/auth/callback/route.ts
-import { createClient } from '@/shared/server/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
