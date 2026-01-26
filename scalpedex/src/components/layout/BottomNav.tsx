@@ -7,7 +7,7 @@ import {
   Scan, 
   LayoutGrid, 
   TrendingUp, 
-  Newspaper, 
+  Bell, 
   User 
 } from 'lucide-react';
 
@@ -65,7 +65,7 @@ export function BottomNav() {
   const navItems = [
     { href: '/collection', icon: <LayoutGrid size={20} strokeWidth={1.5} />, label: 'Collection' },
     { href: '/market', icon: <TrendingUp size={20} strokeWidth={1.5} />, label: 'Market' },
-    { href: '/news', icon: <Newspaper size={20} strokeWidth={1.5} />, label: 'News' },
+    { href: '/alerts', icon: <Bell size={20} strokeWidth={1.5} />, label: 'Alertes' },
     { href: '/profile', icon: <User size={20} strokeWidth={1.5} />, label: 'Profil' },
   ];
 
