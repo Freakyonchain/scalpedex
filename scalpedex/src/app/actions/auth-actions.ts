@@ -1,236 +1,295 @@
-// /src/features/auth/server-actions/auth-actions.ts
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
-import { SignInCredentials, SignUpData, ResetPasswordData, NewPasswordData, AuthResponse } from '@/types/auth.types';
-import { validateSignUpData } from '@/lib/utils/auth-validators';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export type ActionResult<T = void> = {
+  success: true;
+  data?: T;
+  message?: string;
+} | {
+  success: false;
+  message: string;
+  errors?: Record<string, string[]>;
+};
+
+// ============================================================================
+// SCHEMAS (Zod Validation)
+// ============================================================================
+
+const emailSchema = z.string().email('Email invalide');
+
+const passwordSchema = z
+  .string()
+  .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+  .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
+  .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre');
+
+const signUpSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  username: z
+    .string()
+    .min(3, 'Le pseudo doit contenir au moins 3 caractères')
+    .max(20, 'Le pseudo ne doit pas dépasser 20 caractères')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Le pseudo ne peut contenir que des lettres, chiffres et underscores'),
+});
+
+const signInSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'Le mot de passe est requis'),
+});
+
+const resetPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+// ============================================================================
+// ACTIONS
+// ============================================================================
 
 /**
- * Action serveur pour la connexion
+ * Sign up a new user
+ * Creates auth user + profile entry (via Supabase trigger)
  */
-export async function signIn(credentials: SignInCredentials): Promise<AuthResponse> {
-  const supabase = createClient();
+export async function signUp(formData: FormData): Promise<ActionResult> {
+  const rawData = {
+    email: formData.get('email'),
+    password: formData.get('password'),
+    username: formData.get('username'),
+  };
+
+  // Validate input
+  const validation = signUpSchema.safeParse(rawData);
   
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password
-    });
-
-    if (error) {
-      return { 
-        success: false, 
-        error: error.message 
-      };
-    }
-
-    return { 
-      success: true, 
-      user: {
-        id: data.user.id,
-        email: data.user.email || '',
-        createdAt: data.user.created_at
-      } 
-    };
-  } catch (error) {
-    console.error('Login error:', error);
-    return { 
-      success: false, 
-      error: 'Une erreur est survenue lors de la connexion' 
-    };
-  }
-}
-
-/**
- * Action serveur pour l'inscription
- */
-export async function signUp(userData: SignUpData): Promise<AuthResponse> {
-  const supabase = createClient();
-  
-  // Validation des données
-  const validation = validateSignUpData(userData);
-  if (!validation.valid) {
-    return { 
-      success: false, 
-      error: validation.error 
-    };
-  }
-  
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email: userData.email,
-      password: userData.password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-      }
-    });
-
-    if (error) {
-      return { 
-        success: false, 
-        error: error.message 
-      };
-    }
-
-    return { 
-      success: true, 
-      user: data.user,
-      message: 'Vérifiez votre email pour confirmer votre inscription'
-    };
-  } catch (error) {
-    console.error('Signup error:', error);
-    return { 
-      success: false, 
-      error: 'Une erreur est survenue lors de l\'inscription' 
-    };
-  }
-}
-
-/**
- * Action serveur pour la déconnexion
- */
-export async function signOut(): Promise<void> {
-  const supabase = createClient();
-  
-  try {
-    await supabase.auth.signOut();
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
-  
-  redirect('/auth/sign-in');
-}
-
-/**
- * Action serveur pour la réinitialisation du mot de passe
- */
-export async function requestPasswordReset(data: ResetPasswordData): Promise<AuthResponse> {
-  const supabase = createClient();
-  
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`
-    });
-
-    if (error) {
-      return { 
-        success: false, 
-        error: error.message 
-      };
-    }
-
-    return { 
-      success: true, 
-      message: 'Un email de réinitialisation a été envoyé'
-    };
-  } catch (error) {
-    console.error('Password reset request error:', error);
-    return { 
-      success: false, 
-      error: 'Une erreur est survenue lors de la demande de réinitialisation' 
-    };
-  }
-}
-
-/**
- * Action serveur pour définir un nouveau mot de passe
- */
-export async function setNewPassword(data: NewPasswordData): Promise<AuthResponse> {
-  const supabase = createClient();
-  
-  // Validation
-  if (data.password !== data.confirmPassword) {
+  if (!validation.success) {
     return {
       success: false,
-      error: 'Les mots de passe ne correspondent pas'
+      message: 'Données invalides',
+      errors: validation.error.flatten().fieldErrors as Record<string, string[]>,
     };
   }
-  
+
+  const { email, password, username } = validation.data;
+
   try {
-    const { error } = await supabase.auth.updateUser({
-      password: data.password
-    });
+    const supabase = await createClient();
 
-    if (error) {
-      return { 
-        success: false, 
-        error: error.message 
-      };
-    }
-
-    return { 
-      success: true, 
-      message: 'Mot de passe mis à jour avec succès'
-    };
-  } catch (error) {
-    console.error('Set new password error:', error);
-    return { 
-      success: false, 
-      error: 'Une erreur est survenue lors de la réinitialisation du mot de passe' 
-    };
-  }
-}
-
-/**
- * Action serveur pour le renvoi de l'email de vérification
- */
-export async function resendVerificationEmail(email: string): Promise<AuthResponse> {
-  const supabase = createClient();
-  
-  try {
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
+    // Create auth user
+    const { data, error } = await supabase.auth.signUp({
       email,
+      password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-      }
+        data: {
+          username,
+        },
+      },
     });
 
     if (error) {
+      console.error('[signUp] Auth error:', error.message);
+      
+      if (error.message.includes('already registered')) {
+        return { success: false, message: 'Cet email est déjà utilisé' };
+      }
+      
+      return { success: false, message: 'Erreur lors de l\'inscription' };
+    }
+
+    if (!data.user) {
+      return { success: false, message: 'Erreur lors de la création du compte' };
+    }
+
+    // Update profile with username
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ username })
+      .eq('id', data.user.id);
+
+    if (profileError) {
+      console.error('[signUp] Profile update error:', profileError.message);
+    }
+
+    // Check if email confirmation is required
+    if (data.user.identities?.length === 0) {
       return { 
-        success: false, 
-        error: error.message 
+        success: true, 
+        message: 'Vérifiez votre email pour confirmer votre compte' 
       };
     }
 
-    return { 
-      success: true, 
-      message: 'Email de vérification renvoyé'
-    };
+    revalidatePath('/', 'layout');
+    
+    return { success: true, message: 'Compte créé avec succès!' };
+
   } catch (error) {
-    console.error('Resend verification email error:', error);
-    return { 
-      success: false, 
-      error: 'Une erreur est survenue lors du renvoi de l\'email' 
-    };
+    console.error('[signUp] Unexpected error:', error);
+    return { success: false, message: 'Une erreur inattendue s\'est produite' };
   }
 }
 
 /**
- * Action serveur pour obtenir la session utilisateur
+ * Sign in an existing user
  */
-export async function getUserSession() {
-  const supabase = createClient();
+export async function signIn(formData: FormData): Promise<ActionResult> {
+  const rawData = {
+    email: formData.get('email'),
+    password: formData.get('password'),
+  };
+
+  // Validate input
+  const validation = signInSchema.safeParse(rawData);
   
+  if (!validation.success) {
+    return {
+      success: false,
+      message: 'Données invalides',
+      errors: validation.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const { email, password } = validation.data;
+
   try {
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error || !data.session) {
-      return { success: false, user: null };
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('[signIn] Auth error:', error.message);
+      
+      if (error.message.includes('Invalid login credentials')) {
+        return { success: false, message: 'Email ou mot de passe incorrect' };
+      }
+      
+      if (error.message.includes('Email not confirmed')) {
+        return { success: false, message: 'Veuillez confirmer votre email' };
+      }
+      
+      return { success: false, message: 'Erreur de connexion' };
     }
+
+    if (!data.user) {
+      return { success: false, message: 'Utilisateur non trouvé' };
+    }
+
+    // Update streak
+    await supabase
+      .from('profiles')
+      .update({ 
+        last_active_date: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', data.user.id);
+
+    revalidatePath('/', 'layout');
     
+    return { success: true, message: 'Connexion réussie!' };
+
+  } catch (error) {
+    console.error('[signIn] Unexpected error:', error);
+    return { success: false, message: 'Une erreur inattendue s\'est produite' };
+  }
+}
+
+/**
+ * Sign out the current user
+ */
+export async function signOut(): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+    
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error('[signOut] Error:', error.message);
+      return { success: false, message: 'Erreur lors de la déconnexion' };
+    }
+
+    revalidatePath('/', 'layout');
+    
+    return { success: true, message: 'Déconnexion réussie' };
+
+  } catch (error) {
+    console.error('[signOut] Unexpected error:', error);
+    return { success: false, message: 'Une erreur inattendue s\'est produite' };
+  }
+}
+
+/**
+ * Send password reset email
+ */
+export async function resetPassword(formData: FormData): Promise<ActionResult> {
+  const rawData = {
+    email: formData.get('email'),
+  };
+
+  const validation = resetPasswordSchema.safeParse(rawData);
+  
+  if (!validation.success) {
+    return {
+      success: false,
+      message: 'Email invalide',
+      errors: validation.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const { email } = validation.data;
+
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+    });
+
+    if (error) {
+      console.error('[resetPassword] Error:', error.message);
+    }
+
+    // Always return success to not reveal if email exists
     return { 
       success: true, 
-      user: {
-        id: data.session.user.id,
-        email: data.session.user.email || '',
-        createdAt: data.session.user.created_at
-      }
+      message: 'Si cet email existe, un lien de réinitialisation a été envoyé' 
     };
+
   } catch (error) {
-    console.error('Get user session error:', error);
-    return { success: false, user: null };
+    console.error('[resetPassword] Unexpected error:', error);
+    return { success: false, message: 'Une erreur inattendue s\'est produite' };
+  }
+}
+
+/**
+ * Get current authenticated user with profile data
+ */
+export async function getCurrentUser() {
+  try {
+    const supabase = await createClient();
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return null;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    return { user, profile };
+
+  } catch (error) {
+    console.error('[getCurrentUser] Unexpected error:', error);
+    return null;
   }
 }
