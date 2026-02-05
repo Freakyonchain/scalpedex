@@ -70,7 +70,7 @@ export function useScanner({ onScanSuccess, elementId = 'reader' }: UseScannerOp
         handleScanSuccess,
         () => {}
       );
-    } catch (err: any) {
+    } catch (err) {
       setError("Impossible d'accéder à la caméra. Vérifiez vos permissions.");
       setScanStatus('error');
       console.error('Scanner error:', err);

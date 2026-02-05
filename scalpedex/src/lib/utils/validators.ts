@@ -37,15 +37,15 @@ export function isValidEmail(email: string): boolean {
     try {
       new URL(url);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
-  
+
   /**
    * Valide si une valeur est non vide
    */
-  export function isNotEmpty(value: any): boolean {
+  export function isNotEmpty(value: unknown): boolean {
     if (typeof value === 'string') {
       return value.trim().length > 0;
     }

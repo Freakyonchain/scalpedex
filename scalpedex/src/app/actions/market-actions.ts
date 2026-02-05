@@ -55,8 +55,8 @@ export async function getHotProducts({
   category, 
   limit = 10 
 }: MarketSearchParams = {}): Promise<ProductTrend[]> {
-  const supabase = await createClient();
-  
+  await createClient();
+
   try {
     // Le code suivant est simulé pour l'exemple
     // Dans une implémentation réelle, nous utiliserions Supabase pour requêter les données
@@ -124,8 +124,8 @@ export async function getMarketOpportunities({
   minProfit = 10,
   limit = 10 
 }: MarketSearchParams = {}): Promise<MarketOpportunity[]> {
-  const supabase = await createClient();
-  
+  await createClient();
+
   try {
     // Données simulées
     const mockOpportunities: MarketOpportunity[] = [
@@ -176,8 +176,8 @@ export async function getMarketOpportunities({
 export async function getRecentSales({ 
   limit = 10 
 }: MarketSearchParams = {}): Promise<MarketSale[]> {
-  const supabase = await createClient();
-  
+  await createClient();
+
   try {
     // Données simulées
     const mockSales: MarketSale[] = [
@@ -217,8 +217,8 @@ export async function getRecentSales({
  * Récupère les statistiques du marché
  */
 export async function getMarketStats(): Promise<MarketStats> {
-  const supabase = await createClient();
-  
+  await createClient();
+
   try {
     // Données simulées
     return {
@@ -246,8 +246,8 @@ export async function getMarketStats(): Promise<MarketStats> {
  * Récupère l'historique des prix d'un produit
  */
 export async function getProductPriceHistory(productId: string): Promise<PriceHistory | null> {
-  const supabase = await createClient();
-  
+  await createClient();
+
   try {
     // Dans une implémentation réelle, nous interrogerions la base de données
     // Données simulées pour l'exemple

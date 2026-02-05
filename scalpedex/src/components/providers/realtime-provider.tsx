@@ -135,18 +135,18 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
             table: 'notifications',
             filter: `user_id=eq.${user.id}`,
           },
-          (payload) => {
-            const newNotification = payload.new as Notification;
-            
+          (payload: { new: Record<string, unknown> }) => {
+            const newNotification = payload.new as unknown as Notification;
+
             // Add to local state
             setNotifications(prev => [newNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
-            
+
             // Show toast
             showNotificationToast(newNotification);
           }
         )
-        .subscribe((status) => {
+        .subscribe((status: string) => {
           setIsConnected(status === 'SUBSCRIBED');
           console.log('[Realtime] Subscription status:', status);
         });

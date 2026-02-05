@@ -4,10 +4,8 @@ import React from 'react';
 import { ItemCard } from './ItemCard';
 import { ItemModal } from './ItemModal';
 import { useCollection } from '@/hooks/useCollection';
-import { CollectionQueryParams } from '@/types/collection.types';
-
 interface CollectionGridProps {
-  initialParams?: CollectionQueryParams;
+  initialParams?: { search?: string; condition?: string; page?: number };
 }
 
 export function CollectionGrid({ initialParams = {} }: CollectionGridProps) {

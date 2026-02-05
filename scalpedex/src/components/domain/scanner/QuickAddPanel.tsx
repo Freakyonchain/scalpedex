@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Save, X } from 'lucide-react';
-import { QuickAddData, Product } from '@/types/scanner.types';
+import { QuickAddData, QuickAddCondition, Product } from '@/types/scanner.types';
 import { addToCollection } from '@/app/actions/collection-actions';
 import { toast } from 'sonner';
 
@@ -13,18 +13,18 @@ interface QuickAddPanelProps {
 }
 
 // Constantes
-const CONDITIONS = [
-  { id: 'FACTORY_SEALED', label: '🎁 Sealed' },
-  { id: 'MINT', label: '✨ Mint' },
-  { id: 'NEAR_MINT', label: '👌 Near Mint' },
-  { id: 'PLAYED', label: '👍 Played' },
-] as const;
+const CONDITIONS: { id: QuickAddCondition; label: string }[] = [
+  { id: 'FACTORY_SEALED', label: 'Sealed' },
+  { id: 'MINT', label: 'Mint' },
+  { id: 'NEAR_MINT', label: 'Near Mint' },
+  { id: 'PLAYED', label: 'Played' },
+];
 
-export function QuickAddPanel({ barcode, product, onClose }: QuickAddPanelProps) {
+export function QuickAddPanel({ product, onClose }: QuickAddPanelProps) {
   const [formData, setFormData] = useState<{
     price: string;
     quantity: number;
-    condition: string;
+    condition: QuickAddCondition | '';
   }>({
     price: '',
     quantity: 1,
@@ -54,10 +54,10 @@ export function QuickAddPanel({ barcode, product, onClose }: QuickAddPanelProps)
   };
 
   const handleSubmit = async () => {
-    if (!isValid || !product.id) return;
-    
+    if (!isValid || !product.id || !formData.condition) return;
+
     setIsSubmitting(true);
-    
+
     try {
       const data: QuickAddData = {
         productId: product.id,
@@ -65,17 +65,18 @@ export function QuickAddPanel({ barcode, product, onClose }: QuickAddPanelProps)
         condition: formData.condition,
         quantity: formData.quantity
       };
-      
+
       const result = await addToCollection(data);
-      
+
       if (result.success) {
         toast.success(result.message);
         onClose();
       } else {
         toast.error(result.message);
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Une erreur est survenue');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue';
+      toast.error(message);
       console.error('Error adding to collection:', error);
     } finally {
       setIsSubmitting(false);
@@ -99,7 +100,7 @@ export function QuickAddPanel({ barcode, product, onClose }: QuickAddPanelProps)
           {/* Prix */}
           <div>
             <label className="block text-sm text-violet-300 mb-2">
-              Prix d'achat
+              Prix d&apos;achat
             </label>
             <input
               type="number"

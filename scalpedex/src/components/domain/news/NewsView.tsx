@@ -11,7 +11,6 @@ import { BreakingAlert } from './BreakingAlert';
 import { NewsList } from './NewsList';
 import { DropCalendar } from './DropCalendar';
 import { GuidesList } from './GuidesList';
-import { formatTimeAgo } from '@/lib/utils/news-formatters';
 
 function NewsLoading() {
   return (

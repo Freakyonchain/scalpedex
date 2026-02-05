@@ -327,7 +327,7 @@ export async function getRecentScans(limit: number = 10): Promise<ActionResult<{
     const formattedScans = scans.map(scan => ({
       id: scan.id,
       barcode: scan.barcode,
-      product_name: (scan.products as any)?.name ?? null,
+      product_name: (scan.products as unknown as { name: string } | null)?.name ?? null,
       calculated_score: scan.calculated_score,
       created_at: scan.created_at,
     }));

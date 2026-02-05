@@ -3,11 +3,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { 
-  Scan, 
-  Zap, 
-  TrendingUp, 
+import {
+  Zap,
+  TrendingUp,
   TrendingDown,
   Wallet,
   BarChart3,
@@ -125,7 +123,6 @@ function BentoCard({ title, icon, children, href, className = '', delay = 0 }: B
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
   const supabase = createClientBrowser();
 
   useEffect(() => {

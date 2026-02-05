@@ -25,9 +25,11 @@ export interface ScalpingScore {
 export type ScanStatus = 'idle' | 'scanning' | 'detected' | 'error';
 export type ProductView = 'scalping' | 'collection' | null;
 
+export type QuickAddCondition = 'FACTORY_SEALED' | 'CUSTOM_SEALED' | 'MINT' | 'NEAR_MINT' | 'PLAYED';
+
 export interface QuickAddData {
   productId: string;
   purchasePrice: number;
-  condition: string;
+  condition: QuickAddCondition;
   quantity: number;
 }

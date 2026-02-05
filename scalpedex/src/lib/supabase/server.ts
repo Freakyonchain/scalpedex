@@ -13,17 +13,17 @@ export async function createClient() {
         get(name: string) {
           return cookieStore.get(name)?.value ?? '';
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: unknown) {
           try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
+            cookieStore.set({ name, value, ...(options as Record<string, unknown>) });
+          } catch {
             // Handle errors silently in server components
           }
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: unknown) {
           try {
-            cookieStore.delete({ name, ...options });
-          } catch (error) {
+            cookieStore.delete({ name, ...(options as Record<string, unknown>) });
+          } catch {
             // Handle errors silently in server components
           }
         },

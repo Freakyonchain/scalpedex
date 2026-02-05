@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface NewsDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 function NewsDetailLoading() {
@@ -26,7 +26,8 @@ function NewsDetailLoading() {
 }
 
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
-  const newsItem = await getNewsById(params.id);
+  const { id } = await params;
+  const newsItem = await getNewsById(id);
   
   if (!newsItem) {
     notFound();
@@ -89,7 +90,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                     rel="noopener noreferrer"
                     className="inline-flex items-center bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded transition-colors"
                   >
-                    Lire l'article complet
+                    Lire l&apos;article complet
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                       <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />

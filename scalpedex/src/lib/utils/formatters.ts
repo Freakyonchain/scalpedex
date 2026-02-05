@@ -40,6 +40,7 @@ export function formatPrice(
   /**
    * Calcule et formate le temps écoulé depuis une date donnée
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   export function formatTimeAgo(date: Date | string, locale = 'fr-FR'): string {
     const d = typeof date === 'string' ? new Date(date) : date;
     const now = new Date();

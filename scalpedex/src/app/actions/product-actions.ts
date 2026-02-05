@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { Product } from '@/types/scanner.types';
-import { revalidatePath } from 'next/cache';
 
 export async function getProductByBarcode(barcode: string): Promise<Product | null> {
   try {

@@ -2,14 +2,13 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { useCollection } from '@/hooks/useCollection';
 import { useCollectionFilters } from '@/hooks/useCollectionFilters';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function Pagination() {
   const { total, limit, page } = useCollection();
-  const { filters, updateFilter } = useCollectionFilters();
+  const { updateFilter } = useCollectionFilters();
   
   if (total <= limit) {
     return null;

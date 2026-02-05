@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { TrendingUp, DollarSign } from 'lucide-react';
 import { ScalpingScore } from '@/types/scanner.types';
 
 interface ScalpingScoreDisplayProps {

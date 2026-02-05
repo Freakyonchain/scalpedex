@@ -1,35 +1,43 @@
-// /src/features/collection/hooks/useCollectionStats.ts
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCollectionStats } from '@/app/actions/collection-actions';
-import { CollectionStats } from '@/types/collection.types';
+import { getPortfolioStats, type PortfolioStats } from '@/app/actions/collection-actions';
 
 export function useCollectionStats() {
-  const [stats, setStats] = useState<CollectionStats>({
+  const [stats, setStats] = useState<PortfolioStats>({
     totalValue: 0,
+    totalCost: 0,
+    totalProfit: 0,
     totalItems: 0,
-    sealedCount: 0
+    sealedCount: 0,
+    avgRoi: 0,
+    bestRoiItem: null,
+    bestRoiPercent: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const statsData = await getCollectionStats();
-        setStats(statsData);
-      } catch (err) {
-        setError('Erreur lors du chargement des statistiques');
-        console.error('Stats load error:', err);
-      } finally {
-        setLoading(false);
+  const loadStats = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await getPortfolioStats();
+
+      if (result.success && result.data) {
+        setStats(result.data);
+      } else if (!result.success) {
+        setError(result.message);
       }
-    };
-    
+    } catch (err) {
+      setError('Erreur lors du chargement des statistiques');
+      console.error('Stats load error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadStats();
   }, []);
 
@@ -37,16 +45,6 @@ export function useCollectionStats() {
     stats,
     loading,
     error,
-    refreshStats: async () => {
-      setLoading(true);
-      try {
-        const statsData = await getCollectionStats();
-        setStats(statsData);
-      } catch (err) {
-        console.error('Refresh stats error:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
+    refreshStats: loadStats
   };
 }

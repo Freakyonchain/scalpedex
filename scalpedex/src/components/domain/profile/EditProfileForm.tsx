@@ -60,7 +60,7 @@ export function EditProfileForm({ profile, onClose }: EditProfileFormProps) {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-violet-300">Nom d'utilisateur</label>
+            <label className="block text-sm font-medium text-violet-300">Nom d&apos;utilisateur</label>
             <input
               type="text"
               name="username"
@@ -71,7 +71,7 @@ export function EditProfileForm({ profile, onClose }: EditProfileFormProps) {
           </div>
           
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-violet-300">URL de l'avatar</label>
+            <label className="block text-sm font-medium text-violet-300">URL de l&apos;avatar</label>
             <input
               type="text"
               name="avatarUrl"

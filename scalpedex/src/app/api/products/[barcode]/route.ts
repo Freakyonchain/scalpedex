@@ -1,24 +1,22 @@
-// app/api/products/[barcode]/route.ts
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
 
 export async function GET(
   request: Request,
-  { params }: { params: { barcode: string } }
+  { params }: { params: Promise<{ barcode: string }> }
 ) {
   try {
-    const supabase = createClientBrowser()
+    const { barcode } = await params
+    const supabase = await createClient()
     const { data, error } = await supabase
       .from('products')
       .select('id, name, barcode')
-      .eq('barcode', params.barcode)
+      .eq('barcode', barcode)
       .eq('is_active', true)
       .single()
 
     if (error) {
       if (error.code === 'PGRST116') {
-        // No data found
         return NextResponse.json(null)
       }
       return NextResponse.json(
@@ -28,15 +26,17 @@ export async function GET(
     }
 
     return NextResponse.json(data)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching product:', error)
+    const message = error instanceof Error ? error.message : 'Error fetching product'
     return NextResponse.json(
-      { message: error.message || 'Error fetching product' },
+      { message },
       { status: 500 }
     )
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
     status: 204,

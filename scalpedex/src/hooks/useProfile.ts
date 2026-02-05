@@ -8,10 +8,9 @@ import {
   changePassword,
   deleteAccount
 } from '@/app/actions/profile-actions';
-import { 
-  UserProfile, 
-  ProfileStats, 
-  ProfileResponse,
+import {
+  UserProfile,
+  ProfileStats,
   UpdateProfileData,
   ChangePasswordData
 } from '@/types/profile.types';
