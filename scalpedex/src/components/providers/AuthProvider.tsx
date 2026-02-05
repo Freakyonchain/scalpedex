@@ -6,7 +6,7 @@ import { useState } from 'react'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [supabaseClient] = useState(() =>
-    createBrowserClient<Database>(
+    createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )

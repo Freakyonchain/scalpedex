@@ -222,7 +222,7 @@ function ItemModal({ item, onClose }: { item: CollectionItem; onClose: () => voi
 
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-              <div className="flex items-center gap-2 text-zinc-500 mb-1"><DollarSign size={14} /><span className="text-[10px] uppercase tracking-wider">Prix d'achat</span></div>
+              <div className="flex items-center gap-2 text-zinc-500 mb-1"><DollarSign size={14} /><span className="text-[10px] uppercase tracking-wider">Prix d&apos;achat</span></div>
               <p className="text-lg font-bold text-white font-mono">{item.purchasePrice.toFixed(2)}€</p>
             </div>
             <div className="p-3 rounded-xl bg-black/30 border border-white/5">

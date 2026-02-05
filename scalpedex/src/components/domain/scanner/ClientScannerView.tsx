@@ -1,15 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { BarcodeScanner } from './BarcodeScanner';
 import { ProductResult } from './ProductResult';
 import { useProductData } from '@/hooks/useProductData';
 import { ManualEntry } from './ManualEntry';
+import type { Product } from '@/types/scanner.types';
 
 export function ClientScannerView() {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
-  const { product, loading, error } = useProductData(scannedBarcode);
+  const { product: rawProduct, loading } = useProductData(scannedBarcode);
+
+  // Map ProductWithPrice → scanner Product type
+  const product: Product | null = useMemo(() => {
+    if (!rawProduct) return null;
+    return {
+      id: rawProduct.id,
+      name: rawProduct.name,
+      barcode: rawProduct.ean || scannedBarcode || '',
+      category: rawProduct.type,
+      msrp: rawProduct.msrp ?? undefined,
+      marketPrice: rawProduct.current_price ?? undefined,
+      imageUrl: rawProduct.image_url ?? undefined,
+    };
+  }, [rawProduct, scannedBarcode]);
 
   const handleBarcodeDetected = (barcode: string) => {
     setScannedBarcode(barcode);
@@ -29,10 +44,10 @@ export function ClientScannerView() {
               <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-violet-500 rounded-full"></div>
             </div>
           ) : (
-            <ProductResult 
-              barcode={scannedBarcode} 
-              product={product} 
-              onReset={resetScan} 
+            <ProductResult
+              barcode={scannedBarcode}
+              product={product}
+              onReset={resetScan}
             />
           )}
         </div>

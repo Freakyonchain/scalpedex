@@ -1,7 +1,7 @@
 // /src/features/auth/components/VerifyEmailView.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, RefreshCw, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { resendVerificationEmail } from '@/app/actions/auth-actions';
@@ -43,9 +43,9 @@ export function VerifyEmailView() {
         setCanResend(false);
         setCountdown(60);
       } else {
-        setError(result.error || "Erreur lors du renvoi de l'email");
+        setError(result.message || "Erreur lors du renvoi de l'email");
       }
-    } catch (error) {
+    } catch {
       setError("Une erreur est survenue");
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ export function VerifyEmailView() {
         <p>Pour compléter votre inscription :</p>
         <ol className="list-decimal list-inside space-y-1">
           <li>Vérifiez votre boîte de réception</li>
-          <li>Cliquez sur le lien de confirmation dans l'email</li>
+          <li>Cliquez sur le lien de confirmation dans l&apos;email</li>
           <li>Connectez-vous à votre compte</li>
         </ol>
       </div>

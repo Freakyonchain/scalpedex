@@ -1,4 +1,3 @@
-// /src/features/auth/components/ResetPasswordForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -10,14 +9,14 @@ export function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') || '';
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const { loading, error, success, resetPassword } = useResetPassword();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,13 +29,12 @@ export function ResetPasswordForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const result = await resetPassword({
+
+    await resetPassword({
       ...formData,
       token
     });
-    
-    // Redirection vers la page de connexion après succès
+
     if (success) {
       setTimeout(() => {
         router.push('/auth/sign-in');
@@ -52,9 +50,9 @@ export function ResetPasswordForm() {
           <Lock className="h-8 w-8 text-violet-400" />
         </div>
         <div className="text-center">
-          <h3 className="text-lg font-medium text-white">Réinitialiser votre mot de passe</h3>
+          <h3 className="text-lg font-medium text-white">Reinitialiser votre mot de passe</h3>
           <p className="text-sm text-violet-300 mt-1">
-            Veuillez choisir un nouveau mot de passe sécurisé
+            Veuillez choisir un nouveau mot de passe securise
           </p>
         </div>
       </div>
@@ -66,7 +64,7 @@ export function ResetPasswordForm() {
         </div>
       )}
 
-      {/* Message de succès */}
+      {/* Message de succes */}
       {success && (
         <div className="bg-green-900/30 border border-green-800/30 rounded-lg p-3 text-green-300 text-sm">
           {success}
@@ -102,3 +100,35 @@ export function ResetPasswordForm() {
             name="confirmPassword"
             placeholder="Confirmer le mot de passe"
             value={formData.confirmPassword}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 bg-black/20 border border-violet-800/30 rounded-lg text-white placeholder-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500 pr-10"
+            required
+            autoComplete="new-password"
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-400"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          >
+            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || !formData.password || !formData.confirmPassword}
+          className="w-full py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Reinitialisation...
+            </>
+          ) : (
+            'Reinitialiser le mot de passe'
+          )}
+        </button>
+      </form>
+    </div>
+  );
+}

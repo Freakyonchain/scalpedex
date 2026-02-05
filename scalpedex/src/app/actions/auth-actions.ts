@@ -268,6 +268,104 @@ export async function resetPassword(formData: FormData): Promise<ActionResult> {
 }
 
 /**
+ * Resend verification email
+ */
+export async function resendVerificationEmail(email: string): Promise<ActionResult> {
+  if (!email) {
+    return { success: false, message: 'Email requis' };
+  }
+
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+
+    if (error) {
+      console.error('[resendVerificationEmail] Error:', error.message);
+    }
+
+    // Always return success to not reveal if email exists
+    return {
+      success: true,
+      message: 'Si cet email existe, un email de vérification a été renvoyé',
+    };
+
+  } catch (error) {
+    console.error('[resendVerificationEmail] Unexpected error:', error);
+    return { success: false, message: 'Une erreur inattendue s\'est produite' };
+  }
+}
+
+/**
+ * Get current authenticated user session
+ */
+export async function getUserSession() {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return { user: null };
+    }
+
+    return { user };
+  } catch {
+    return { user: null };
+  }
+}
+
+/**
+ * Set a new password (after reset token)
+ */
+export async function setNewPassword(data: {
+  password: string;
+  confirmPassword: string;
+  token: string;
+}): Promise<ActionResult> {
+  if (data.password !== data.confirmPassword) {
+    return { success: false, message: 'Les mots de passe ne correspondent pas' };
+  }
+
+  const passwordValidation = passwordSchema.safeParse(data.password);
+  if (!passwordValidation.success) {
+    return {
+      success: false,
+      message: passwordValidation.error.issues[0]?.message || 'Mot de passe invalide',
+    };
+  }
+
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.updateUser({
+      password: data.password,
+    });
+
+    if (error) {
+      console.error('[setNewPassword] Error:', error.message);
+      return { success: false, message: 'Erreur lors de la mise à jour du mot de passe' };
+    }
+
+    return { success: true, message: 'Mot de passe mis à jour avec succès' };
+  } catch (error) {
+    console.error('[setNewPassword] Unexpected error:', error);
+    return { success: false, message: 'Une erreur inattendue s\'est produite' };
+  }
+}
+
+/**
+ * Request password reset (alias for resetPassword with object input)
+ */
+export async function requestPasswordReset(data: { email: string }): Promise<ActionResult> {
+  const formData = new FormData();
+  formData.append('email', data.email);
+  return resetPassword(formData);
+}
+
+/**
  * Get current authenticated user with profile data
  */
 export async function getCurrentUser() {

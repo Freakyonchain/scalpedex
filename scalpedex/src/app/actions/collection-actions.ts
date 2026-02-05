@@ -234,11 +234,11 @@ export async function getPortfolioStats(): Promise<ActionResult<PortfolioStats>>
     let bestRoiPercent = -Infinity;
 
     for (const item of items) {
-      const product = item.products as any;
+      const product = item.products as unknown as { name: string; product_price_cache: { current_price: number | null } | { current_price: number | null }[] | null };
       const priceCache = Array.isArray(product.product_price_cache)
         ? product.product_price_cache[0]
         : product.product_price_cache;
-      
+
       const marketPrice = priceCache?.current_price ?? item.purchase_price;
       const itemValue = marketPrice * item.quantity;
       const itemCost = item.purchase_price * item.quantity;
@@ -346,7 +346,7 @@ export async function getCollectionItems(options?: {
 
     // Format items
     const formattedItems: CollectionItem[] = (items || []).map(item => {
-      const product = item.products as any;
+      const product = item.products as unknown as { name: string; type: string; image_url: string | null; product_price_cache: { current_price: number | null } | { current_price: number | null }[] | null };
       const priceCache = Array.isArray(product.product_price_cache)
         ? product.product_price_cache[0]
         : product.product_price_cache;
@@ -538,7 +538,7 @@ export async function updateCollectionItem(input: {
     }
 
     // Build update object
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
     

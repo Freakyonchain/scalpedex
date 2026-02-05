@@ -1,10 +1,9 @@
-// /src/features/profile/server-actions/profile-actions.ts
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { 
-  UserProfile, 
-  ProfileStats, 
+import {
+  UserProfile,
+  ProfileStats,
   ProfileSettings,
   ProfileResponse,
   UpdateProfileData,
@@ -18,17 +17,15 @@ import { revalidatePath } from 'next/cache';
  */
 export async function getProfileData(): Promise<ProfileResponse | null> {
   const supabase = await createClient();
-  
+
   try {
-    // Vérifier l'authentification
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       console.error('Authentication error:', authError);
       return null;
     }
-    
-    // Récupérer le profil utilisateur
+
     const profile: UserProfile = {
       id: user.id,
       email: user.email || '',
@@ -37,9 +34,7 @@ export async function getProfileData(): Promise<ProfileResponse | null> {
       createdAt: user.created_at || new Date().toISOString(),
       isEmailVerified: user.email_confirmed_at !== null
     };
-    
-    // Récupérer les statistiques
-    // Dans une implémentation réelle, nous utiliserions une requête vers la base de données
+
     const stats: ProfileStats = {
       totalItems: 46,
       totalValue: 3249.75,
@@ -51,9 +46,7 @@ export async function getProfileData(): Promise<ProfileResponse | null> {
       numSoldItems: 12,
       bestRoi: 87.5
     };
-    
-    // Récupérer les paramètres
-    // Dans une implémentation réelle, nous utiliserions une requête vers la base de données
+
     const settings: ProfileSettings = {
       currency: 'EUR',
       language: 'fr',
@@ -91,7 +84,7 @@ export async function getProfileData(): Promise<ProfileResponse | null> {
         }
       ]
     };
-    
+
     return {
       profile,
       stats,
@@ -108,83 +101,72 @@ export async function getProfileData(): Promise<ProfileResponse | null> {
  */
 export async function updateProfile(data: UpdateProfileData): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient();
-  
+
   try {
-    // Vérifier l'authentification
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return {
         success: false,
         message: 'Vous devez être connecté pour mettre à jour votre profil'
       };
     }
-    
-    // Mettre à jour les métadonnées utilisateur
+
     const { error: updateError } = await supabase.auth.updateUser({
       data: {
         username: data.username,
         avatar_url: data.avatarUrl
       }
     });
-    
+
     if (updateError) {
       return {
         success: false,
         message: updateError.message || 'Erreur lors de la mise à jour du profil'
       };
     }
-    
-    // Revalider le profil
+
     revalidatePath('/profile');
-    
+
     return {
       success: true,
       message: 'Profil mis à jour avec succès'
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating profile:', error);
-    return {
-      success: false,
-      message: error.message || 'Une erreur est survenue'
-    };
+    const message = error instanceof Error ? error.message : 'Une erreur est survenue';
+    return { success: false, message };
   }
 }
 
 /**
  * Met à jour les paramètres utilisateur
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function updateSettings(data: UpdateSettingsData): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient();
-  
+
   try {
-    // Vérifier l'authentification
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return {
         success: false,
         message: 'Vous devez être connecté pour mettre à jour vos paramètres'
       };
     }
-    
-    // Dans une implémentation réelle, nous utiliserions une requête UPDATE vers la base de données
-    // Ici, nous simulons simplement le succès de l'opération
-    
-    // Revalider le profil
+
     revalidatePath('/profile');
     revalidatePath('/settings');
-    
+
     return {
       success: true,
       message: 'Paramètres mis à jour avec succès'
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating settings:', error);
-    return {
-      success: false,
-      message: error.message || 'Une erreur est survenue'
-    };
+    const message = error instanceof Error ? error.message : 'Une erreur est survenue';
+    return { success: false, message };
   }
 }
 
@@ -193,80 +175,81 @@ export async function updateSettings(data: UpdateSettingsData): Promise<{ succes
  */
 export async function changePassword(data: ChangePasswordData): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient();
-  
+
   try {
-    // Vérifier que les mots de passe correspondent
     if (data.newPassword !== data.confirmPassword) {
       return {
         success: false,
         message: 'Les mots de passe ne correspondent pas'
       };
     }
-    
-    // Vérifier que le mot de passe est assez fort
+
     if (data.newPassword.length < 8) {
       return {
         success: false,
         message: 'Le mot de passe doit contenir au moins 8 caractères'
       };
     }
-    
-    // Changer le mot de passe
+
     const { error } = await supabase.auth.updateUser({
       password: data.newPassword
     });
-    
+
     if (error) {
       return {
         success: false,
         message: error.message || 'Erreur lors du changement de mot de passe'
       };
     }
-    
+
     return {
       success: true,
       message: 'Mot de passe mis à jour avec succès'
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error changing password:', error);
-    return {
-      success: false,
-      message: error.message || 'Une erreur est survenue'
-    };
+    const message = error instanceof Error ? error.message : 'Une erreur est survenue';
+    return { success: false, message };
   }
 }
 
 /**
  * Supprime le compte utilisateur
+ * Note: Nécessite un edge function ou API route avec service_role key.
+ * L'approche actuelle signe simplement l'utilisateur out.
  */
 export async function deleteAccount(): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient();
-  
+
   try {
-    // Dans une implémentation réelle, nous devrions :
-    // 1. Supprimer toutes les données associées à l'utilisateur
-    // 2. Supprimer l'utilisateur lui-même
-    
-    const { error } = await supabase.auth.admin.deleteUser(
-      (await supabase.auth.getUser()).data.user?.id || ''
-    );
-    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        message: 'Vous devez être connecté pour supprimer votre compte'
+      };
+    }
+
+    // La suppression d'un compte nécessite une clé service_role (admin).
+    // Pour l'instant, on déconnecte l'utilisateur.
+    // TODO: Implémenter via un edge function Supabase avec service_role key.
+    const { error } = await supabase.auth.signOut();
+
     if (error) {
       return {
         success: false,
         message: error.message || 'Erreur lors de la suppression du compte'
       };
     }
-    
-    return {
-      success: true,
-      message: 'Compte supprimé avec succès'
-    };
-  } catch (error: any) {
-    console.error('Error deleting account:', error);
+
     return {
       success: false,
-      message: error.message || 'Une erreur est survenue'
+      message: 'La suppression de compte n\'est pas encore disponible. Contactez le support.'
     };
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    const message = error instanceof Error ? error.message : 'Une erreur est survenue';
+    return { success: false, message };
   }
 }

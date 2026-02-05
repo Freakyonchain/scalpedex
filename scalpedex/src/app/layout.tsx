@@ -5,6 +5,9 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Toaster } from 'sonner';
 import type { Metadata, Viewport } from 'next';
 
+// Force dynamic rendering — all pages need auth/Supabase
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'ScalpeDex | Market Intelligence for Pokémon Investors',
   description: 'L\'outil ultime de Market Intelligence pour les investisseurs et scalpers Pokémon. Scanner, analyser, dominer.',

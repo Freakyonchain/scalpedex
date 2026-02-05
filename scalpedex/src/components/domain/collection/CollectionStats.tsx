@@ -75,9 +75,9 @@ export function CollectionStats() {
 
       <StatsCard
         title="Meilleur ROI"
-        value={loading || !stats.bestRoi ? '-' : `${stats.bestRoi.percentage.toFixed(1)}%`}
+        value={loading || !stats.bestRoiPercent ? '-' : `${stats.bestRoiPercent.toFixed(1)}%`}
         icon={<TrendingUp size={24} className="text-violet-400" />}
-        subtitle={stats.bestRoi ? stats.bestRoi.productName : 'Aucune vente'}
+        subtitle={stats.bestRoiItem || 'Aucune vente'}
         subtitleIcon={<TrendingUp size={16} />}
         loading={loading}
       />

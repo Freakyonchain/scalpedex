@@ -1,7 +1,7 @@
 // /src/features/profile/components/ProfileHeader.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { UserProfile } from '@/types/profile.types';
 import { User, Edit } from 'lucide-react';
 

@@ -2,20 +2,17 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   User,
   Settings,
   TrendingUp,
-  TrendingDown,
   Package,
   Scan,
   DollarSign,
-  Award,
   Flame,
   Target,
   Zap,
   Crown,
-  Star,
   ChevronRight,
   Bell,
   Shield,

@@ -1,49 +1,47 @@
-// /src/features/auth/hooks/useResetPassword.ts
 'use client';
 
 import { useState } from 'react';
 import { requestPasswordReset, setNewPassword } from '@/app/actions/auth-actions';
-import { ResetPasswordData, NewPasswordData } from '@/types/auth.types';
 
 export function useResetPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const requestReset = async (data: ResetPasswordData) => {
+  const requestReset = async (data: { email: string }) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
       const result = await requestPasswordReset(data);
-      
+
       if (!result.success) {
-        setError(result.error);
+        setError(result.message);
       } else {
         setSuccess(result.message || 'Email de réinitialisation envoyé');
       }
-    } catch (error) {
+    } catch {
       setError('Une erreur est survenue');
     } finally {
       setLoading(false);
     }
   };
 
-  const resetPassword = async (data: NewPasswordData) => {
+  const resetPassword = async (data: { password: string; confirmPassword: string; token: string }) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
       const result = await setNewPassword(data);
-      
+
       if (!result.success) {
-        setError(result.error);
+        setError(result.message);
       } else {
         setSuccess(result.message || 'Mot de passe mis à jour avec succès');
       }
-    } catch (error) {
+    } catch {
       setError('Une erreur est survenue');
     } finally {
       setLoading(false);

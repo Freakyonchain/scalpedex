@@ -2,14 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Bell,
   TrendingUp,
   TrendingDown,
   Package,
   Zap,
-  AlertTriangle,
-  CheckCircle,
   Clock,
   Target,
   Plus,
@@ -19,14 +17,8 @@ import {
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
-  Filter,
   Trash2,
-  Settings,
-  Volume2,
-  VolumeX,
-  Eye,
   ShoppingCart,
-  RefreshCw
 } from 'lucide-react';
 
 // ============================================
@@ -473,7 +465,7 @@ function CreateAlertModal({ onClose }: { onClose: () => void }) {
             className="flex-1 h-12 rounded-xl bg-gradient-to-r from-primary to-violet-500 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Bell size={18} />
-            Créer l'alerte
+            Créer l&apos;alerte
           </button>
         </div>
       </motion.div>

@@ -23,7 +23,7 @@ export default function VerifyEmailPage() {
         </Link>
         
         <p className="text-violet-400">
-          Pas reçu d'email ? Vérifiez vos spams.
+          Pas reçu d&apos;email ? Vérifiez vos spams.
         </p>
       </div>
     </AuthLayout>

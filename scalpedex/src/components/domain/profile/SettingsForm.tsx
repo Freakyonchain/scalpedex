@@ -160,7 +160,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           <h2 className="text-xl font-bold text-white pt-4">Notifications</h2>
           
           <div className="space-y-6">
-            {settings.notifications.map((notification, index) => (
+            {settings.notifications.map((notification) => (
               <div key={notification.type} className="bg-violet-900/20 rounded-lg p-4 border border-violet-800/30">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-medium text-white">

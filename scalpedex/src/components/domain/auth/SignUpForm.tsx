@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useSignUp } from '@/hooks/useSignUp';
-import { Alert } from '@/components/ui/Alert';
 
 export function SignUpForm() {
   const [formData, setFormData] = useState({

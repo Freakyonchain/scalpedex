@@ -2,7 +2,7 @@
 import React from 'react';
 import { Suspense } from 'react';
 import { getUserSession } from '@/app/actions/auth-actions';
-import { getCollectionItems } from '@/app/actions/collection-actions';
+import { getCollectionItems, type ItemCondition } from '@/app/actions/collection-actions';
 import { CollectionFilters } from './CollectionFilters';
 import { CollectionGrid } from './CollectionGrid';
 import { CollectionStats } from './CollectionStats';
@@ -33,32 +33,44 @@ async function CollectionLoading() {
   );
 }
 
+// Valid conditions for type safety
+const VALID_CONDITIONS: ItemCondition[] = ['FACTORY_SEALED', 'CUSTOM_SEALED', 'MINT', 'NEAR_MINT', 'PLAYED'];
+
+function isValidCondition(value: string): value is ItemCondition {
+  return VALID_CONDITIONS.includes(value as ItemCondition);
+}
+
 export default async function CollectionView({ searchParams }: CollectionViewProps) {
   // Extraction sécurisée des valeurs de searchParams
   const pageParam = searchParams.page;
   const pageNum = typeof pageParam === 'string' ? parseInt(pageParam, 10) : 1;
   const page = isNaN(pageNum) ? 1 : pageNum;
-  
+
   const searchParam = searchParams.search;
   const search = typeof searchParam === 'string' ? searchParam : '';
-  
+
   const conditionParam = searchParams.condition;
-  const condition = typeof conditionParam === 'string' ? conditionParam : '';
-  
+  const conditionStr = typeof conditionParam === 'string' ? conditionParam : '';
+  const condition = isValidCondition(conditionStr) ? conditionStr : undefined;
+
   // Récupérer la session utilisateur
   const { user } = await getUserSession();
   const userName = user?.email?.split('@')[0] || 'Collectionneur';
 
   // Récupérer les données de collection côté serveur pour SSR
-  const collectionData = await getCollectionItems({ 
-    search, 
-    condition, 
-    page,
-    limit: 12
+  const collectionResult = await getCollectionItems({
+    search: search || undefined,
+    condition,
+    limit: 12,
+    offset: (page - 1) * 12,
   });
 
+  // Extract data safely
+  const items = collectionResult.success && collectionResult.data ? collectionResult.data.items : [];
+  const total = collectionResult.success && collectionResult.data ? collectionResult.data.total : 0;
+
   // Si la collection est vide (sans filtres actifs)
-  if (collectionData.items.length === 0 && !search && !condition) {
+  if (items.length === 0 && !search && !conditionStr) {
     return <EmptyState userName={userName} />;
   }
 
@@ -73,7 +85,7 @@ export default async function CollectionView({ searchParams }: CollectionViewPro
           Gérez et suivez vos produits collectionnés
         </p>
       </header>
-      
+
       <Suspense fallback={<CollectionLoading />}>
         {/* Stats Cards */}
         <div className="mb-6">
@@ -86,21 +98,21 @@ export default async function CollectionView({ searchParams }: CollectionViewPro
         </div>
 
         {/* Message pour les résultats filtrés */}
-        {(search || condition) && (
+        {(search || conditionStr) && (
           <div className="text-violet-300 text-sm mb-3">
-            {collectionData.total === 0 ? (
+            {total === 0 ? (
               <p>Aucun résultat trouvé pour votre recherche</p>
             ) : (
-              <p>{collectionData.total} résultat(s) trouvé(s)</p>
+              <p>{total} résultat(s) trouvé(s)</p>
             )}
           </div>
         )}
 
         {/* Grille de la Collection */}
-        <CollectionGrid initialParams={{ search, condition, page }} />
+        <CollectionGrid initialParams={{ search, condition: conditionStr, page }} />
 
         {/* Pagination */}
-        {collectionData.total > 12 && (
+        {total > 12 && (
           <Pagination />
         )}
       </Suspense>

@@ -15,7 +15,7 @@ interface ProductResultProps {
 export function ProductResult({ product, barcode, onReset }: ProductResultProps) {
   const [view, setView] = useState<ProductView>(null);
   const [retailPrice, setRetailPrice] = useState<string>('');
-  const { calculateScalpingScore } = useProductData(barcode);
+  useProductData(barcode);
   
   if (!product) return null;
 

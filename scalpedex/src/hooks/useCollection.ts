@@ -1,16 +1,23 @@
-// /src/features/collection/hooks/useCollection.ts
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  getCollectionItems, 
-  addCollectionItem, 
-  removeCollectionItem, 
-  markItemAsSold 
+import {
+  getCollectionItems,
+  addToCollection,
+  removeFromCollection,
+  recordSale,
+  type CollectionItem,
+  type ItemCondition,
 } from '@/app/actions/collection-actions';
-import { CollectionItem, CollectionQueryParams, CollectionResponse } from '@/types/collection.types';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+
+interface CollectionQueryParams {
+  search?: string;
+  condition?: string;
+  page?: number;
+  limit?: number;
+}
 
 export function useCollection(initialParams: CollectionQueryParams = {}) {
   const [items, setItems] = useState<CollectionItem[]>([]);
@@ -20,11 +27,11 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<CollectionItem | null>(null);
-  
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   // Récupérer les paramètres de l'URL
   const getQueryParams = useCallback((): CollectionQueryParams => {
     return {
@@ -34,21 +41,27 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
       limit
     };
   }, [searchParams, limit]);
-  
+
   // Charger les items de collection
   const loadItems = useCallback(async (params: CollectionQueryParams) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await getCollectionItems(params);
-      
-      if (response.status === 'success') {
-        setItems(response.items);
-        setTotal(response.total);
-        setPage(response.page);
-      } else {
-        setError(response.error || 'Une erreur est survenue');
+      const conditionFilter = params.condition as ItemCondition | undefined;
+      const response = await getCollectionItems({
+        search: params.search || undefined,
+        condition: conditionFilter || undefined,
+        limit: params.limit,
+        offset: ((params.page || 1) - 1) * (params.limit || 12),
+      });
+
+      if (response.success && response.data) {
+        setItems(response.data.items);
+        setTotal(response.data.total);
+        setPage(params.page || 1);
+      } else if (!response.success) {
+        setError(response.message);
       }
     } catch (err) {
       setError('Erreur lors du chargement de la collection');
@@ -57,19 +70,12 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
       setLoading(false);
     }
   }, []);
-  
+
   // Mettre à jour les filtres et recharger les items
   const updateFilters = useCallback((newParams: Partial<CollectionQueryParams>) => {
     const currentParams = getQueryParams();
     const updatedParams = { ...currentParams, ...newParams };
-    
-    // Supprimer les paramètres vides
-    Object.keys(updatedParams).forEach(key => {
-      if (!updatedParams[key as keyof CollectionQueryParams]) {
-        delete updatedParams[key as keyof CollectionQueryParams];
-      }
-    });
-    
+
     // Convertir en chaîne de requête
     const queryString = new URLSearchParams();
     Object.entries(updatedParams).forEach(([key, value]) => {
@@ -77,15 +83,15 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
         queryString.set(key, value.toString());
       }
     });
-    
+
     // Mettre à jour l'URL
     const newUrl = `${pathname}?${queryString.toString()}`;
     router.push(newUrl);
-    
+
     // Recharger les items
     loadItems(updatedParams);
   }, [getQueryParams, pathname, router, loadItems]);
-  
+
   // Ajouter un item à la collection
   const addItem = useCallback(async (data: {
     productId: string;
@@ -94,11 +100,15 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
     quantity: number;
   }) => {
     try {
-      const result = await addCollectionItem(data);
-      
+      const result = await addToCollection({
+        productId: data.productId,
+        purchasePrice: data.purchasePrice,
+        quantity: data.quantity,
+        condition: data.condition as ItemCondition,
+      });
+
       if (result.success) {
         toast.success(result.message);
-        // Recharger les items
         loadItems(getQueryParams());
         return true;
       } else {
@@ -111,15 +121,14 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
       return false;
     }
   }, [getQueryParams, loadItems]);
-  
+
   // Supprimer un item de la collection
   const removeItem = useCallback(async (itemId: string) => {
     try {
-      const result = await removeCollectionItem(itemId);
-      
+      const result = await removeFromCollection(itemId);
+
       if (result.success) {
         toast.success(result.message);
-        // Recharger les items
         loadItems(getQueryParams());
         return true;
       } else {
@@ -132,7 +141,7 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
       return false;
     }
   }, [getQueryParams, loadItems]);
-  
+
   // Marquer un item comme vendu
   const sellItem = useCallback(async (data: {
     itemId: string;
@@ -140,11 +149,14 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
     soldDate?: string;
   }) => {
     try {
-      const result = await markItemAsSold(data);
-      
+      const result = await recordSale({
+        collectionItemId: data.itemId,
+        soldPrice: data.soldPrice,
+        soldDate: data.soldDate,
+      });
+
       if (result.success) {
         toast.success(result.message);
-        // Recharger les items
         loadItems(getQueryParams());
         return true;
       } else {
@@ -157,12 +169,12 @@ export function useCollection(initialParams: CollectionQueryParams = {}) {
       return false;
     }
   }, [getQueryParams, loadItems]);
-  
+
   // Charger les items au chargement initial
   useEffect(() => {
     loadItems(getQueryParams());
   }, [loadItems, getQueryParams]);
-  
+
   return {
     items,
     total,

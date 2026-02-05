@@ -1,8 +1,16 @@
 'use client';
 
 import React from 'react';
-import { CollectionItem, CONDITIONS } from '@/types/collection.types';
+import type { CollectionItem } from '@/app/actions/collection-actions';
 import { Sparkles, Zap } from 'lucide-react';
+
+const CONDITION_LABELS: Record<string, string> = {
+  FACTORY_SEALED: 'Scelle Usine',
+  CUSTOM_SEALED: 'Scelle Custom',
+  MINT: 'Mint',
+  NEAR_MINT: 'Near Mint',
+  PLAYED: 'Joue',
+};
 
 interface ItemCardProps {
   item: CollectionItem;
@@ -10,8 +18,8 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, onClick }: ItemCardProps) {
-  const { product, condition, quantity, purchasePrice } = item;
-  
+  const { product_name, product_image, condition, quantity, purchase_price } = item;
+
   // Badge style selon la condition
   const getBadgeStyle = () => {
     switch(condition) {
@@ -29,12 +37,12 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
   };
 
   return (
-    <div 
+    <div
       onClick={onClick}
       style={{
-        width: '160px', 
-        height: '220px', 
-        maxWidth: '160px', 
+        width: '160px',
+        height: '220px',
+        maxWidth: '160px',
         maxHeight: '220px',
         position: 'relative',
         overflow: 'hidden',
@@ -47,21 +55,21 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
     >
       {/* Image avec effet neon glow */}
       <div style={{
-        height: '120px', 
-        width: '100%', 
+        height: '120px',
+        width: '100%',
         maxHeight: '120px',
-        position: 'relative', 
+        position: 'relative',
         overflow: 'hidden'
       }}>
-        {product.imageUrl ? (
+        {product_image ? (
           <div style={{ position: 'relative', height: '100%', width: '100%' }}>
             <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 1 }}></div>
-            <img 
-              src={product.imageUrl} 
-              alt={product.name}
+            <img
+              src={product_image}
+              alt={product_name}
               style={{
-                height: '100%', 
-                width: '100%', 
+                height: '100%',
+                width: '100%',
                 objectFit: 'cover',
                 transition: 'transform 0.7s',
               }}
@@ -81,24 +89,23 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
             <Sparkles className="w-8 h-8 text-violet-500/50" />
           </div>
         )}
-        
-        {/* Condition badge - style cyberpunk */}
+
+        {/* Condition badge */}
         <div style={{
           position: 'absolute',
           top: '8px',
           right: '8px',
           zIndex: 20
         }}>
-          <div className={`px-2 py-0.5 text-[10px] rounded border border-${condition === 'FACTORY_SEALED' ? 'blue' : 'violet'}-400/50 ${getBadgeStyle()} text-white font-bold shadow-lg flex items-center gap-1`}>
+          <div className={`px-2 py-0.5 text-[10px] rounded border border-violet-400/50 ${getBadgeStyle()} text-white font-bold shadow-lg flex items-center gap-1`}>
             {condition === 'FACTORY_SEALED' && <Zap size={10} />}
-            {CONDITIONS[condition] || '?'}
+            {CONDITION_LABELS[condition] || '?'}
           </div>
         </div>
       </div>
-      
-      {/* Info content with neon accents */}
+
+      {/* Info content */}
       <div style={{ padding: '12px', position: 'relative', zIndex: 2 }}>
-        {/* Title with cyberpunk line clamp */}
         <h3 style={{
           fontWeight: 500,
           color: 'white',
@@ -110,10 +117,9 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
           overflow: 'hidden',
           textShadow: '0 0 5px rgba(0, 0, 0, 0.3)'
         }}>
-          {product.name}
+          {product_name}
         </h3>
-        
-        {/* Glass panel with price */}
+
         <div style={{
           marginTop: '12px',
           display: 'flex',
@@ -122,28 +128,28 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
         }}>
           <div className="px-2 py-1 bg-black/30 backdrop-blur-sm border border-violet-800/30 rounded text-sm">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-fuchsia-300 font-bold">
-              {purchasePrice.toLocaleString('fr-FR', {
+              {purchase_price.toLocaleString('fr-FR', {
                 style: 'currency',
                 currency: 'EUR',
                 maximumFractionDigits: 0
               })}
             </span>
           </div>
-          
+
           {quantity > 1 && (
             <div className="px-1.5 py-1 rounded text-xs bg-violet-800/70 border border-violet-600/40 text-violet-200 font-bold">
-              ×{quantity}
+              x{quantity}
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Hover reveal tooltip */}
       <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center
                     translate-y-full group-hover:translate-y-0 transition-transform duration-300">
         <span className="text-[10px] text-violet-200 font-semibold tracking-wider uppercase flex items-center gap-1">
           <Sparkles size={10} className="text-violet-400" />
-          Voir détails
+          Voir details
         </span>
       </div>
     </div>

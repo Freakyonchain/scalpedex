@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Camera, Info } from 'lucide-react';
 import { useScanner } from '@/hooks/useScanner';
-import { ScanStatus } from '@/types/scanner.types';
 
 interface BarcodeScannerProps {
   onScanSuccess: (barcode: string) => void;
 }
 
 export function BarcodeScanner({ onScanSuccess }: BarcodeScannerProps) {
-  const { scanStatus, error, startScanning, stopScanning, scanManually, lastResult } = useScanner({
+  const { scanStatus, error, startScanning, stopScanning, lastResult } = useScanner({
     onScanSuccess: (result) => onScanSuccess(result.barcode)
   });
   

@@ -20,7 +20,7 @@ export function Modal({
   className,
   showCloseButton = true,
 }: ModalProps) {
-  const [isClosing, setIsClosing] = useState(false);
+  const [isClosing, setIsClosing] = React.useState(false);
 
   // Handle Escape key
   React.useEffect(() => {

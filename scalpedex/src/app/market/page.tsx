@@ -1,18 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Search, 
-  Filter,
+import { motion } from 'framer-motion';
+import {
+  TrendingUp,
+  TrendingDown,
+  Search,
   Flame,
-  Zap,
   ArrowUpRight,
   ArrowDownRight,
   Clock,
-  Package,
   BarChart3,
   Star,
   ChevronRight,

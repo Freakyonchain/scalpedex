@@ -51,7 +51,7 @@ export function MarketOpportunitiesSection({
       {/* Voir plus */}
       <div className="flex justify-center">
         <button className="px-6 py-2 bg-violet-900/30 rounded-lg text-violet-300 hover:bg-violet-800/30 transition-colors flex items-center gap-2">
-          Voir plus d'opportunités
+          Voir plus d&apos;opportunités
           <ArrowRight size={16} />
         </button>
       </div>
